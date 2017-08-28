@@ -1,8 +1,9 @@
 #include <stdio.h>
+#define TOTAL_SECUENCES 4
 
 int* getSecuences(char* filename)
 {
-	static int secuences[2] = {30, 67};
+	static int secuences[TOTAL_SECUENCES] = {-5459555, -1419643, 9206201, 4325544};
 	return secuences;
 }
 
@@ -37,14 +38,15 @@ int main()
 	printf("LAB1: SIMD-SSE\n");
 
 	char* filename = "numbers.raw";
+	//const int TOTAL_SECUENCES = 4;
 
-	int* elements;
-	elements = getSecuences(filename);
+	int* secuences;
+	secuences = getSecuences(filename);
 
 	int i = 0;
 
-	for (i = 0; i < 2; i++)
-		printf("%d\n", *(elements + i));
+	for (int i = 0; i < TOTAL_SECUENCES; i++)
+		printf("%d\n", *(secuences + i));
 
 	return 0;
 }

@@ -2,7 +2,7 @@
 High Performance Computing
 
 
-## Compile:
+## Compile and execution:
 
 ```
 gcc simdsort.c -o simdsort -g -msse4 && ./simdsort 

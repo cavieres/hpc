@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <pmmintrin.h>
-#define TOTAL_SECUENCES 4
+#include <string.h>
+#define TOTAL_SECUENCES 10
+#define SUB_SECUENCES 4
 
-int* getSecuences(char* filename)
+float *getSecuences(char* filename)
 {
-	static int secuences[TOTAL_SECUENCES] = {-5459555, -1419643, 9206201, 4325544};
+	// TODO: Get array from file as integer.
+	static float secuences[TOTAL_SECUENCES] = {-5459555, -1419643, 9206201, 4325544, 7233019, -7826876, -5901765, 1576008, 6165429, -2737032};
+
 	return secuences;
 }
 
@@ -25,9 +29,10 @@ int sortSecuencesAsc(int sec1, int sec2, int sec3, int sec4)
 	shuffle();
 }
 
-int bmn(int sec1, int sec2)
+__m128 bmn(__m128 subSec1, __m128 subSec2)
 {
 	// Get two secuences lenght 8.
+	
 }
 
 int mergeSimd(int secuence)
@@ -39,18 +44,23 @@ int main()
 {
 	printf("LAB1: SIMD-SSE\n");
 
-	char* filename = "numbers.raw";
-	int* secuences;
-	secuences = getSecuences(filename);
+	char *filename = "numbers.raw";
+	float *sec;
 
-	__m128i A, A1, A2;
-	int a[4] __attribute__((aligned(16)));
+	sec = getSecuences(filename);
 
-	for (int i = 0; i < TOTAL_SECUENCES; i++)
-	{
-		printf("%d\n", *(secuences + i));
-		a[i] = *(secuences + i);
-	}
+	__m128 A1, A2;
+	float a1[4] __attribute__((aligned(16)));
+	float a2[4] __attribute__((aligned(16)));
+
+	memcpy(a1, (sec + 0), SUB_SECUENCES * 4);
+	memcpy(a2, (sec + 4), SUB_SECUENCES * 4);
+
+	A1 = _mm_load_ps(a1);
+	A2 = _mm_load_ps(a2);
+
+	printf("a1: %f %f %f %f\n", a1[0], a1[1], a1[2], a1[3]);
+	printf("a2: %f %f %f %f\n", a2[0], a2[1], a2[2], a2[3]);
 
 	return 0;
 }

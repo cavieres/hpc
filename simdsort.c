@@ -9,8 +9,8 @@ __m128 orderedSubSec1, orderedSubSec2;
 float *getSecuences(char *filename)
 {
 	//static float secuences[TOTAL_SECUENCES] = {-5459555, -1419643, 9206201, 4325544, 7233019, -7826876, -5901765, 1576008, 6165429, -2737032};
-	static float secuences[TOTAL_SECUENCES] = {1,2,3,4, 8,7,6,5, 30, 45};
-	//static float secuences[TOTAL_SECUENCES] = {5,20,25,30, 18,9,7,2, 30, 45};
+	//static float secuences[TOTAL_SECUENCES] = {1,2,3,4, 8,7,6,5, 30, 45};
+	static float secuences[TOTAL_SECUENCES] = {5,20,25,30, 18,9,7,2, 30, 45};
 	return secuences;
 }
 
@@ -33,15 +33,21 @@ int sortSecuencesAsc(int sec1, int sec2, int sec3, int sec4)
 
 __m128 arrangeBmnSubSecs(__m128 subSec1, __m128 subSec2, int subSecNumber)
 {	
-	if (subSecNumber == 1)
-		subSecNumber = 0;
-		
 	__m128 arrangedSubSec1, arrangedSubSec2, arrangedSubSecFinal;
 	
-	arrangedSubSec1 = _mm_shuffle_ps(subSec1, subSec2, _MM_SHUFFLE(0, 0, 0, 0));
+	if (subSecNumber == 1)
+	{
+		arrangedSubSec1 = _mm_shuffle_ps(subSec1, subSec2, _MM_SHUFFLE(0, 0, 0, 0));
+		arrangedSubSec2 = _mm_shuffle_ps(subSec1, subSec2, _MM_SHUFFLE(1, 1, 1, 1));
+	}
+	else 
+	{
+		arrangedSubSec1 = _mm_shuffle_ps(subSec1, subSec2, _MM_SHUFFLE(0 + 2, 0 + 2, 0 + 2, 0 + 2));
+		arrangedSubSec2 = _mm_shuffle_ps(subSec1, subSec2, _MM_SHUFFLE(1 + 2, 1 + 2, 1 + 2, 1 + 2));
+	}
+	
 	arrangedSubSec1 = _mm_shuffle_ps(arrangedSubSec1, arrangedSubSec1, _MM_SHUFFLE(3, 1, 2, 0));
 	
-	arrangedSubSec2 = _mm_shuffle_ps(subSec1, subSec2, _MM_SHUFFLE(1, 1, 1, 1));
 	arrangedSubSec2 = _mm_shuffle_ps(arrangedSubSec2, arrangedSubSec2, _MM_SHUFFLE(3, 1, 2, 0));
 	
 	arrangedSubSecFinal = _mm_shuffle_ps(arrangedSubSec1, arrangedSubSec2, _MM_SHUFFLE(3, 2, 1, 0));
@@ -49,24 +55,37 @@ __m128 arrangeBmnSubSecs(__m128 subSec1, __m128 subSec2, int subSecNumber)
 	return arrangedSubSecFinal;
 }
 
+__m128 arrangeBmnOrderedSubSecs(__m128 orderedSubSec1, __m128 orderedSubSec2, int subSecNumber)
+{
+	
+}
+
 void bmn(__m128 subSec1, __m128 subSec2)
 {
 	// Get two 4-lenght ascending ordered secuences.
 	__m128 subSecMin, subSecMax;
 	
-	//for (int i = 0; i < 3; i++)
-	//{
-	subSecMin = _mm_min_ps(subSec1, subSec2);
-	subSecMax = _mm_max_ps(subSec1, subSec2);
 	
-	subSec1 = arrangeBmnSubSecs(subSecMin, subSecMax, 1);
-	subSec2 = arrangeBmnSubSecs(subSecMin, subSecMax, 2);
-	//}
+	int i = 0;
 	
-	printf("subSec1: %f %f %f %f\n", subSec1[0], subSec1[1], subSec1[2], subSec1[3]);
-	printf("subSec2: %f %f %f %f\n", subSec2[0], subSec2[1], subSec2[2], subSec2[3]);
+	while (1)
+	{
+		subSecMin = _mm_min_ps(subSec1, subSec2);
+		subSecMax = _mm_max_ps(subSec1, subSec2);
+		
+		if (i == 3)
+			break;
+	
+		subSec1 = arrangeBmnSubSecs(subSecMin, subSecMax, 1);
+		subSec2 = arrangeBmnSubSecs(subSecMin, subSecMax, 2);
+		i++;
+	}
 	
 	orderedSubSec1 = subSecMin;
+	orderedSubSec2 = subSecMax;
+	
+	printf("subSecMin: %f %f %f %f\n", subSecMin[0], subSecMin[1], subSecMin[2], subSecMin[3]);
+	printf("subSecMax: %f %f %f %f\n", subSecMax[0], subSecMax[1], subSecMax[2], subSecMax[3]);
 	
 }
 

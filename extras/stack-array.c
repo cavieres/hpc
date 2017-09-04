@@ -14,7 +14,7 @@ void push(float value, int secuence)
 float pop(int secuence)
 {
 	if (stackCount[secuence] == 0)
-		return;
+		return 0;
 		
 	float value = stack[secuence][stackCount[secuence]];
 	stackCount[secuence]--;

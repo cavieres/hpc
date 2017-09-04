@@ -69,11 +69,6 @@ void bmn(__m128 subSec1, __m128 subSec2)
 	
 }
 
-int mergeSimd(int secuence)
-{
-	// Get a secuence lenght 16.  
-}
-
 void transposeRegisterMatrix(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 {
 	__m128 arranged1 = arrangeBmnSubSecs(subSec1, subSec2, 1);
@@ -133,6 +128,35 @@ __m128 invertSubSec(__m128 subSec)
 	return _mm_shuffle_ps(subSec, subSec, _MM_SHUFFLE(0, 1, 2, 3));
 }
 
+float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
+{
+	// Get a secuence lenght 16.
+	
+	static float sortedSec[TOTAL_SECUENCES];
+	float O1[4] __attribute__((aligned(16)));
+	float O2[4] __attribute__((aligned(16)));
+	
+	bmn(subSec1, invertSubSec(subSec3));
+	
+	_mm_store_ps(O1, bmnSubSec1);
+	_mm_store_ps(O2, bmnSubSec2);
+	
+	//sortedSec[0] = O1[1];
+	memcpy(sortedSec, O1, SUB_SECUENCES * 4);
+	memcpy(sortedSec + 4, O2, SUB_SECUENCES * 4);
+	
+	subSec1 = bmnSubSec2;
+	
+	bmn(subSec1, invertSubSec(subSec2));
+	
+	_mm_store_ps(O1, bmnSubSec1);
+	_mm_store_ps(O2, bmnSubSec2);
+	
+	memcpy(sortedSec + 8, O1, SUB_SECUENCES * 4);
+	memcpy(sortedSec + 12, O2, SUB_SECUENCES * 4);
+	
+	return sortedSec;
+}
 int main()
 {
 	printf("LAB1: SIMD-SSE\n");
@@ -170,13 +194,22 @@ int main()
 	inRegSubSec3 = bmnSubSec1;
 	inRegSubSec4 = bmnSubSec2;
 	
-	printf("A1: %f %f %f %f\n", A1[0], A1[1], A1[2], A1[3]);
+	float *sortedSec;
+	sortedSec = mergeSimd(inRegSubSec1, inRegSubSec2, inRegSubSec3, inRegSubSec4);
+	
+	/*printf("A1: %f %f %f %f\n", A1[0], A1[1], A1[2], A1[3]);
 	printf("A2: %f %f %f %f\n", A2[0], A2[1], A2[2], A2[3]);
 	printf("A3: %f %f %f %f\n", A3[0], A3[1], A3[2], A3[3]);
 	printf("A4: %f %f %f %f\n", A4[0], A4[1], A4[2], A4[3]);
-	
+	*/
 	printf("SortedSec1: %f %f %f %f %f %f %f %f\n", inRegSubSec1[0], inRegSubSec1[1], inRegSubSec1[2], inRegSubSec1[3], inRegSubSec2[0], inRegSubSec2[1], inRegSubSec2[2], inRegSubSec2[3]);
 	printf("SortedSec2: %f %f %f %f %f %f %f %f\n", inRegSubSec3[0], inRegSubSec3[1], inRegSubSec3[2], inRegSubSec3[3], inRegSubSec4[0], inRegSubSec4[1], inRegSubSec4[2], inRegSubSec4[3]);
+	
+	printf("sortedSec:");
+	for (int i = 0; i < TOTAL_SECUENCES; i++)
+		printf(" %f", *(sortedSec + i));
+	printf("\n");
+	
 	
 	return 0;
 }

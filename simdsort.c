@@ -131,32 +131,47 @@ __m128 invertSubSec(__m128 subSec)
 float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 {
 	// Get a secuence lenght 16.
-	
+	__m128 O1, O2;
 	static float sortedSec[TOTAL_SECUENCES];
-	float O1[4] __attribute__((aligned(16)));
-	float O2[4] __attribute__((aligned(16)));
+	float sortedSubSec[4] __attribute__((aligned(16)));
 	
-	bmn(subSec1, invertSubSec(subSec3));
+	O1 = subSec1;
+	O2 = subSec3;
 	
-	_mm_store_ps(O1, bmnSubSec1);
-	_mm_store_ps(O2, bmnSubSec2);
+	bmn(O1, invertSubSec(O2));
 	
-	//sortedSec[0] = O1[1];
-	memcpy(sortedSec, O1, SUB_SECUENCES * 4);
-	memcpy(sortedSec + 4, O2, SUB_SECUENCES * 4);
+	_mm_store_ps(sortedSubSec, bmnSubSec1);
+
+	memcpy(sortedSec, sortedSubSec, SUB_SECUENCES * 4);
 	
-	subSec1 = bmnSubSec2;
+	O1 = bmnSubSec2;
+	O2 = subSec2;
 	
-	bmn(subSec1, invertSubSec(subSec2));
+	bmn(O1, invertSubSec(O2));
 	
-	_mm_store_ps(O1, bmnSubSec1);
-	_mm_store_ps(O2, bmnSubSec2);
+	O1 = bmnSubSec1;
+	O2 = subSec4;
 	
-	memcpy(sortedSec + 8, O1, SUB_SECUENCES * 4);
-	memcpy(sortedSec + 12, O2, SUB_SECUENCES * 4);
+	bmn(O1, invertSubSec(O2));
+	
+	_mm_store_ps(sortedSubSec, bmnSubSec1);
+	
+	memcpy(sortedSec + 4, sortedSubSec, SUB_SECUENCES * 4);
+	
+	O1 = bmnSubSec2;
+	O2 = subSec2;
+	
+	bmn(O1, invertSubSec(O2));
+	
+	_mm_store_ps(sortedSubSec, bmnSubSec1);
+	memcpy(sortedSec + 8, sortedSubSec, SUB_SECUENCES * 4);
+	
+	_mm_store_ps(sortedSubSec, bmnSubSec2);
+	memcpy(sortedSec + 12, sortedSubSec, SUB_SECUENCES * 4);
 	
 	return sortedSec;
 }
+
 int main()
 {
 	printf("LAB1: SIMD-SSE\n");

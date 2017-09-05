@@ -31,7 +31,7 @@ void push(float value, int secuence)
 		{
 			if (list->secNum == secuence)
 			{
-				list->secNum = secuence;
+				//list->secNum = secuence;
 				list->stackCount++;
 				list->secData[list->stackCount] = value;
 				list->next = NULL;
@@ -45,6 +45,32 @@ void push(float value, int secuence)
 	head->next = temp;
 }
 
+float pop(int secuence)
+{
+	queue *list = head;
+	
+	if (list == NULL)
+	{
+		// List is empty.
+		return 0;
+	}
+	
+	while (list != NULL)
+	{
+		if (list->secNum == secuence)
+		{
+			if (list->stackCount == 0)
+				return 0;
+				
+			list->stackCount--;
+				
+			return list->secData[list->stackCount + 1];
+		}
+		
+		list = list->next;
+	}
+}
+
 float peek(int secuence)
 {
 	queue *list = head;
@@ -53,9 +79,14 @@ float peek(int secuence)
 	{
 		if (list->secNum == secuence)
 		{
-			printf("top queue: %f\n", list->secData[list->stackCount]);
-			printf("sec. %d total: %f %f %f %f %f %f\n", secuence, list->secData[1], list->secData[2], list->secData[3], list->secData[4], list->secData[5], list->secData[6], list->secData[7]);
-			return 1;
+			if (list->stackCount == 0)
+			{
+				//printf("No data in sec. %d\n", secuence);
+				return 0;
+			}
+			/*printf("top queue sec. %d: %f\n", secuence, list->secData[list->stackCount]);
+			printf("sec. %d total: %f %f %f %f %f %f\n", secuence, list->secData[1], list->secData[2], list->secData[3], list->secData[4], list->secData[5], list->secData[6], list->secData[7]);*/
+			return list->secData[list->stackCount];
 		}
 		
 		list = list->next;
@@ -75,9 +106,16 @@ int main()
 	push(70, 2);
 	push(90, 2);
 	
-	peek(0);
-	peek(1);
-	peek(2);
+	pop(0);
+	pop(0);
+	pop(0);
+	pop(0);
+	pop(0);
+	pop(2);
+	
+	printf("sec. 0: %f\n", peek(0));
+	printf("sec. 1: %f\n", peek(1));
+	printf("sec. 2: %f\n", peek(2));
 	
 	return 1;
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pmmintrin.h>
 #include <string.h>
+#include "stack-pointer.h"
 #define TOTAL_SECUENCES 16
 #define SUB_SECUENCES 4
 
@@ -12,7 +13,11 @@ float *getSecuences(char *filename)
 	//static float secuences[TOTAL_SECUENCES] = {-5459555, -1419643, 9206201, 4325544, 7233019, -7826876, -5901765, 1576008, 6165429, -2737032};
 	//static float secuences[TOTAL_SECUENCES] = {1,2,3,4, 8,7,6,5, 30, 45};
 	//static float secuences[TOTAL_SECUENCES] = {5,20,25,30, 18,9,7,2, 30, 45};
-	static float secuences[TOTAL_SECUENCES] = {12,21,4,13, 9,8,6,7,1,14,3,0,5,11,15,10};
+	//static float secuences[TOTAL_SECUENCES] = {12,21,4,13, 9,8,6,7,1,14,3,0,5,11,15,10};
+	
+	// 32 float secuences.
+	static float secuences[TOTAL_SECUENCES * 2] = {814.91,2.1506,905.89,2.8994,127.86,1.7234,913.46,3.3448,632.73,2.853,98.443,2.0071,279.22,3.8897,547.33,3.4277,957.55,3.0258,964.92,2.8684,158.46,1.1031,970.62,1.9998,957.21,1.5015,485.89,2.5329,800.48,2.4418,142.74,2.1809};
+	
 	return secuences;
 }
 
@@ -172,14 +177,28 @@ float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 	return sortedSec;
 }
 
+float *mwms()
+{
+	printf("peek(0): %f\n", peek(0));
+	printf("peek(1): %f\n", peek(1));
+	printf("peek(2): %f\n", peek(2));
+}
+
 int main()
 {
 	printf("LAB1: SIMD-SSE\n");
 
 	char *filename = "numbers.raw";
+	int secsCount = 2;
+	float *secsSorted[2];
 	float *sec;
 
 	sec = getSecuences(filename);
+
+	/*printf("sec %d:", 0);
+	for (int j = 0; j < 32; j++)
+		printf(" %f", *(sec + j));
+	printf("\n");*/
 
 	__m128 A1, A2, A3, A4;
 	float a1[4] __attribute__((aligned(16)));
@@ -187,44 +206,54 @@ int main()
 	float a3[4] __attribute__((aligned(16)));
 	float a4[4] __attribute__((aligned(16)));
 
-	memcpy(a1, (sec + 0), SUB_SECUENCES * 4);
-	memcpy(a2, (sec + 4), SUB_SECUENCES * 4);
-	memcpy(a3, (sec + 8), SUB_SECUENCES * 4);
-	memcpy(a4, (sec + 12), SUB_SECUENCES * 4);
+	for (int i = 0; i < secsCount; i++)
+	{
+		memcpy(a1, (sec + 0 + TOTAL_SECUENCES * i), SUB_SECUENCES * 4);
+		memcpy(a2, (sec + 4 + TOTAL_SECUENCES * i), SUB_SECUENCES * 4);
+		memcpy(a3, (sec + 8 + TOTAL_SECUENCES * i), SUB_SECUENCES * 4);
+		memcpy(a4, (sec + 12 + TOTAL_SECUENCES * i), SUB_SECUENCES * 4);
 
-	A1 = _mm_load_ps(a1);
-	A2 = _mm_load_ps(a2);
-	A3 = _mm_load_ps(a3);
-	A4 = _mm_load_ps(a4);
+		A1 = _mm_load_ps(a1);
+		A2 = _mm_load_ps(a2);
+		A3 = _mm_load_ps(a3);
+		A4 = _mm_load_ps(a4);
+		
+		// 2.3. In-register sorting.
+		inRegisterSorting(A1, A2, A3, A4);
 
-	inRegisterSorting(A1, A2, A3, A4);
-
-	inRegSubSec2 = invertSubSec(inRegSubSec2);
-	bmn(inRegSubSec1, inRegSubSec2);
-	inRegSubSec1 = bmnSubSec1;
-	inRegSubSec2 = bmnSubSec2;
+		bmn(inRegSubSec1, invertSubSec(inRegSubSec2));
+		inRegSubSec1 = bmnSubSec1;
+		inRegSubSec2 = bmnSubSec2;
 	
-	inRegSubSec4 = invertSubSec(inRegSubSec4);
-	bmn(inRegSubSec3, inRegSubSec4);
-	inRegSubSec3 = bmnSubSec1;
-	inRegSubSec4 = bmnSubSec2;
+		bmn(inRegSubSec3, invertSubSec(inRegSubSec4));
+		inRegSubSec3 = bmnSubSec1;
+		inRegSubSec4 = bmnSubSec2;
 	
-	float *sortedSec;
-	sortedSec = mergeSimd(inRegSubSec1, inRegSubSec2, inRegSubSec3, inRegSubSec4);
+		// 2.4. Merge SIMD.
+		float *sortedSec;
+		sortedSec = mergeSimd(inRegSubSec1, inRegSubSec2, inRegSubSec3, inRegSubSec4);
+	
+		secsSorted[i] = sortedSec;
+		for (int j = TOTAL_SECUENCES - 1; j >= 0 ; j--)
+			push(*(sortedSec + j), i);
+	
+		printf("sortedSec %d:", i);
+		for (int j = 0; j < TOTAL_SECUENCES; j++)
+			printf(" %f", *(sortedSec + j));
+		printf("\n");
+	}
+
+	// 2.5.Multiway merge sort (MWMS).
+	mwms();
 	
 	/*printf("A1: %f %f %f %f\n", A1[0], A1[1], A1[2], A1[3]);
 	printf("A2: %f %f %f %f\n", A2[0], A2[1], A2[2], A2[3]);
 	printf("A3: %f %f %f %f\n", A3[0], A3[1], A3[2], A3[3]);
-	printf("A4: %f %f %f %f\n", A4[0], A4[1], A4[2], A4[3]);
-	*/
-	printf("SortedSec1: %f %f %f %f %f %f %f %f\n", inRegSubSec1[0], inRegSubSec1[1], inRegSubSec1[2], inRegSubSec1[3], inRegSubSec2[0], inRegSubSec2[1], inRegSubSec2[2], inRegSubSec2[3]);
-	printf("SortedSec2: %f %f %f %f %f %f %f %f\n", inRegSubSec3[0], inRegSubSec3[1], inRegSubSec3[2], inRegSubSec3[3], inRegSubSec4[0], inRegSubSec4[1], inRegSubSec4[2], inRegSubSec4[3]);
+	printf("A4: %f %f %f %f\n", A4[0], A4[1], A4[2], A4[3]);*/
 	
-	printf("sortedSec:");
-	for (int i = 0; i < TOTAL_SECUENCES; i++)
-		printf(" %f", *(sortedSec + i));
-	printf("\n");
 	
+	/*printf("SortedSec1: %f %f %f %f %f %f %f %f\n", inRegSubSec1[0], inRegSubSec1[1], inRegSubSec1[2], inRegSubSec1[3], inRegSubSec2[0], inRegSubSec2[1], inRegSubSec2[2], inRegSubSec2[3]);
+	printf("SortedSec2: %f %f %f %f %f %f %f %f\n", inRegSubSec3[0], inRegSubSec3[1], inRegSubSec3[2], inRegSubSec3[3], inRegSubSec4[0], inRegSubSec4[1], inRegSubSec4[2], inRegSubSec4[3]);*/
 	
 	return 0;
 }

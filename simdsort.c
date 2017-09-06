@@ -177,11 +177,61 @@ float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 	return sortedSec;
 }
 
-float *mwms()
+int GetMinValueIndexFromSecs(float **secs, int qty)
+{
+	const int secValue = 0;
+	const int secNumber = 1;
+	int aux;
+	
+	for (int i = 0; i < qty; i++)
+		for (int j = i; j < qty - 1; j++)
+		{
+			if (secs[i][secValue] < secs[j][secValue])
+			{
+				aux = secs[i][secValue];
+				secs[i][secValue] = secs[j][secValue];
+				secs[j][secValue] = aux;
+				
+				aux = secs[i][secNumber];
+				secs[i][secNumber] = secs[j][secNumber];
+				secs[j][secNumber] = aux;
+			}
+		}
+	return secs[0][secNumber];
+}
+
+float *mwms(int numsQty)
 {
 	printf("peek(0): %f\n", peek(0));
 	printf("peek(1): %f\n", peek(1));
 	printf("peek(2): %f\n", peek(2));
+	
+	const int secValue = 0;
+	const int secNumber = 1;
+	int j = 0;
+	int minValueIndexFromSecs;
+	
+	float minValuesFromSecs[numsQty][2];
+	float sortedNumbers[numsQty];
+	
+	while (j < numsQty)
+	{
+		for (int i = 0; i < numsQty; i++)
+		{
+			if (peek(i) == 0)
+				continue;
+			
+			minValuesFromSecs[i][secValue] = peek(i);
+			minValuesFromSecs[i][secNumber] = i;
+		}
+	
+		minValueIndexFromSecs = GetMinValueIndexFromSecs(minValuesFromSecs, numsQty);
+	
+		sortedNumbers[j] = pop(minValueIndexFromSecs);
+		j++;
+	}
+	
+	return sortedNumbers;
 }
 
 int main()
@@ -189,7 +239,7 @@ int main()
 	printf("LAB1: SIMD-SSE\n");
 
 	char *filename = "numbers.raw";
-	int secsCount = 2;
+	int numsQty = 2;
 	float *secsSorted[2];
 	float *sec;
 
@@ -206,7 +256,7 @@ int main()
 	float a3[4] __attribute__((aligned(16)));
 	float a4[4] __attribute__((aligned(16)));
 
-	for (int i = 0; i < secsCount; i++)
+	for (int i = 0; i < numsQty; i++)
 	{
 		memcpy(a1, (sec + 0 + TOTAL_SECUENCES * i), SUB_SECUENCES * 4);
 		memcpy(a2, (sec + 4 + TOTAL_SECUENCES * i), SUB_SECUENCES * 4);
@@ -244,7 +294,7 @@ int main()
 	}
 
 	// 2.5.Multiway merge sort (MWMS).
-	mwms();
+	mwms(numsQty);
 	
 	/*printf("A1: %f %f %f %f\n", A1[0], A1[1], A1[2], A1[3]);
 	printf("A2: %f %f %f %f\n", A2[0], A2[1], A2[2], A2[3]);

@@ -1,3 +1,6 @@
+// http://www.learn-c.org/en/Linked_lists
+// https://gist.github.com/mycodeschool/7510222
+
 #include<stdio.h>
 #include<stdlib.h>
 #define TOTAL_SECUENCES 16

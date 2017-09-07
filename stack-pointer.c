@@ -1,10 +1,10 @@
 #include<stdio.h>
 #include<stdlib.h>
-#define TOTAL_SECUENCES 16
+#define SIZE_SECUENCES 16
 
 typedef struct node {
 	int secNum;
-	float secData[TOTAL_SECUENCES + 1];
+	float secData[SIZE_SECUENCES + 1];
 	int stackCount;
 	struct node *next;
 } queue;
@@ -86,7 +86,7 @@ float peek(int secuence)
 			}
 			/*printf("top queue sec. %d: %f\n", secuence, list->secData[list->stackCount]);
 			printf("sec. %d total: ", secuence);
-			for (int k = 1; k <= TOTAL_SECUENCES; k++)
+			for (int k = 1; k <= SIZE_SECUENCES; k++)
 				printf("%f ", list->secData[k]);
 			printf("\n");*/
 			return list->secData[list->stackCount];

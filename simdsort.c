@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pmmintrin.h>
 #include <string.h>
+#include <getopt.h>
 #include "stack-pointer.h"
 #define SIZE_SECUENCES 16
 #define SUB_SECUENCES 4
@@ -8,7 +9,7 @@
 __m128 bmnSubSec1, bmnSubSec2;
 __m128 inRegSubSec1, inRegSubSec2, inRegSubSec3, inRegSubSec4;
 
-float *getSecuences(char *filename)
+float *getSecuences(char *filename, int secsQty, float *secuences)
 {
 	//static float secuences[SIZE_SECUENCES] = {-5459555, -1419643, 9206201, 4325544, 7233019, -7826876, -5901765, 1576008, 6165429, -2737032};
 	//static float secuences[SIZE_SECUENCES] = {1,2,3,4, 8,7,6,5, 30, 45};
@@ -16,7 +17,41 @@ float *getSecuences(char *filename)
 	//static float secuences[SIZE_SECUENCES] = {12,21,4,13, 9,8,6,7,1,14,3,0,5,11,15,10};
 	
 	// 32 float secuences.
-	static float secuences[SIZE_SECUENCES * 2] = {814.91,2.1506,905.89,2.8994,127.86,1.7234,913.46,3.3448,632.73,2.853,98.443,2.0071,279.22,3.8897,547.33,3.4277,957.55,3.0258,964.92,2.8684,158.46,1.1031,970.62,1.9998,957.21,1.5015,485.89,2.5329,800.48,2.4418,142.74,2.1809};
+	//static float secuences[SIZE_SECUENCES * 2] = {814.91,2.1506,905.89,2.8994,127.86,1.7234,913.46,3.3448,632.73,2.853,98.443,2.0071,279.22,3.8897,547.33,3.4277,957.55,3.0258,964.92,2.8684,158.46,1.1031,970.62,1.9998,957.21,1.5015,485.89,2.5329,800.48,2.4418,142.74,2.1809};
+	
+	
+	//float secuences[SIZE_SECUENCES * secsQty];
+	
+	FILE *filestream = fopen(filename, "r+b");
+	int num[SIZE_SECUENCES * secsQty];
+	
+	if (!filestream)
+	{
+		printf("No se pudo abrir archivo.\n");
+	}
+	
+	for (int i = 0; i < secsQty; i++)
+	{
+		fread(&num, sizeof(int) * secsQty, 1, filestream);
+		*(secuences + i) = (float)num[i];
+		//memset(secuences, (float)num[i], SIZE_SECUENCES * secsQty * sizeof(*num));
+		//printf("%f\n", (float)num[i]);
+	}
+	
+	fclose(filestream);
+
+	//for (int i = 0; i < secsQty; i++)
+	//	fread(&secuences, sizeof(float) * secsQty, secsQty, filestream);
+	
+	//fclose(filestream);
+	
+	//int archivo = open(filename, O_RDONLY);
+	//int *cadena = (float)malloc(secsQty * sizeof(float));
+	//read(archivo, cadena, (secsQty * sizeof(float)));
+	//prinf("cadena: %d", cadena);
+	
+	printf("%s\n", filename);
+	printf("%d\n", secsQty);
 	
 	return secuences;
 }
@@ -272,16 +307,33 @@ float *mwms(int secsQty)
 	//return sortedNumbers;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	printf("LAB1: SIMD-SSE\n");
-	char *filename = "numbers.raw";
 	
-	int secsNum = 2;
+	char *inputFilename;
+	int selection, secsQty;
+	
+	while ((selection = getopt(argc, argv, "i:o:N:d")) != -1)
+	{
+		switch(selection) {
+			case 'i':
+				inputFilename = optarg;
+				break;
+			case 'N':
+				secsQty = atoi(optarg);
+				break;
+		}
+	}
+	
+	//int secsNum = 2;
 	float *secsSorted[2];
-	float *sec;
-
-	sec = getSecuences(filename);
+	
+	// TODO: use getSecuences returning binary file read.
+	//float *sec;
+	//sec = getSecuences(filename);
+	float sec[SIZE_SECUENCES * secsQty];
+	getSecuences(inputFilename, secsQty, sec);
 
 	/*printf("sec %d:", 0);
 	for (int j = 0; j < 32; j++)
@@ -294,7 +346,7 @@ int main()
 	float a3[4] __attribute__((aligned(16)));
 	float a4[4] __attribute__((aligned(16)));
 
-	for (int i = 0; i < secsNum; i++)
+	for (int i = 0; i < secsQty; i++)
 	{
 		memcpy(a1, (sec + 0 + SIZE_SECUENCES * i), SUB_SECUENCES * 4);
 		memcpy(a2, (sec + 4 + SIZE_SECUENCES * i), SUB_SECUENCES * 4);
@@ -336,7 +388,7 @@ int main()
 
 	// 2.5.Multiway merge sort (MWMS).
 	//printf("final sorted nums:");
-	float *sortedNumbers = mwms(secsNum);
+	float *sortedNumbers = mwms(secsQty);
 	//for (int i = 0; i < secsNum * SIZE_SECUENCES; i++)
 	//	printf("%f, ", sortedNumbers[i]);
 

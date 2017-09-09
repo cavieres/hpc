@@ -177,6 +177,17 @@ float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 	return sortedSec;
 }
 
+int areQuequesEmpty(int numQueues)
+{
+	for (int i = 0; i < numQueues; i++)
+	{
+		if (peek(i) != 0)
+			return 0;
+	}
+	
+	return 1;
+}
+
 float minValueIndexFound;
 float GetMinValueIndexFromSecs(float secs[][2], int qty)
 {
@@ -185,15 +196,16 @@ float GetMinValueIndexFromSecs(float secs[][2], int qty)
 	int aux;
 	
 	for (int i = 0; i < qty; i++)
-		for (int j = i; j < qty - 1; j++)
+		for (int j = i + 1; j < qty; j++)
 		{
-			if (secs[j] == 0) // End of list.
+			if (secs[j][secValue] == 0) // End of list.
 			{
 				minValueIndexFound = secs[0][secNumber];
 				return minValueIndexFound;
+				
 			}
 		
-			if (secs[i][secValue] < secs[j][secValue])
+			if (secs[i][secValue] > secs[j][secValue])
 			{
 				aux = secs[i][secValue];
 				secs[i][secValue] = secs[j][secValue];
@@ -207,26 +219,24 @@ float GetMinValueIndexFromSecs(float secs[][2], int qty)
 	
 	// TODO: return local value instead of using global one.
 	minValueIndexFound = secs[0][secNumber];
-	//return minValueIndexFound;
+	return minValueIndexFound;
 }
 
-float *mwms(int secsNum)
+float *mwms(int secsQty)
 {
-	printf("peek(0): %f\n", peek(0));
-	printf("peek(1): %f\n", peek(1));
-	printf("peek(2): %f\n", peek(2));
+	//int secsNum = secsQty;
 	
 	const int secValue = 0;
 	const int secNumber = 1;
 	int j = 0, contListMinValues = 0;
 	int minValueIndexFromSecs;
 	
-	float minValuesFromSecs[secsNum][2];
-	float sortedNumbers[secsNum];
-	
-	while (j < secsNum * SIZE_SECUENCES)
+	float minValuesFromSecs[secsQty][2];
+	float sortedNumbers[secsQty * SIZE_SECUENCES];
+
+	while (j < secsQty * SIZE_SECUENCES)
 	{
-		for (int i = 0; i < secsNum; i++)
+		for (int i = 0; i < secsQty; i++)
 		{
 			if (peek(i) == 0)
 				continue;
@@ -237,32 +247,36 @@ float *mwms(int secsNum)
 		}
 		
 		// TODO: Get value from returning method.
-		minValueIndexFromSecs = GetMinValueIndexFromSecs(minValuesFromSecs, secsNum);
+		minValueIndexFromSecs = GetMinValueIndexFromSecs(minValuesFromSecs, secsQty);
 		minValueIndexFromSecs = minValueIndexFound;
 		
 		sortedNumbers[j] = pop(minValueIndexFromSecs);
+		
+		//printf("sortedNumbers[%d]: %f; indexFound: %d\n", j, sortedNumbers[j], minValueIndexFromSecs);
+		
 		j++;
 		contListMinValues = 0;
 		
 		// Reset list.
-		for (int k = 0; k < secsNum; k++)
+		for (int k = 0; k < secsQty; k++)
 		{
 			minValuesFromSecs[k][secValue] = 0;
 			minValuesFromSecs[k][secNumber] = 0;
 		}
 	}
 	
+	for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
+		printf("%f\n", sortedNumbers[i]);
+	
 	// TODO: Return value.
-	for (int i = 0; i < secsNum * SIZE_SECUENCES; i++)
-		printf("%f, ", sortedNumbers[i]);
 	//return sortedNumbers;
 }
 
 int main()
 {
 	printf("LAB1: SIMD-SSE\n");
-
 	char *filename = "numbers.raw";
+	
 	int secsNum = 2;
 	float *secsSorted[2];
 	float *sec;
@@ -309,7 +323,10 @@ int main()
 	
 		secsSorted[i] = sortedSec;
 		for (int j = SIZE_SECUENCES - 1; j >= 0 ; j--)
+		{
 			push(*(sortedSec + j), i);
+			//printf("push: %f secNo: %d\n", *(sortedSec + j), i);
+		}
 	
 		printf("sortedSec %d:", i);
 		for (int j = 0; j < SIZE_SECUENCES; j++)

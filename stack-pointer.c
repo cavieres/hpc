@@ -5,6 +5,7 @@
 typedef struct node {
 	int secNum;
 	float secData[SIZE_SECUENCES + 1];
+	//float *secData = (float *)malloc(sizeof(float)*16*16);
 	int stackCount;
 	struct node *next;
 } queue;
@@ -14,10 +15,13 @@ queue *head = NULL;
 void push(float value, int secuence)
 {
 	queue *temp = (queue*)malloc(sizeof(queue));
+	//temp->secData = (float *)malloc(sizeof(float)*16*16);
 	
 	temp->secNum = secuence;
 	temp->stackCount++;
+	//printf("queue: %f\n", value);
 	temp->secData[temp->stackCount] = value;
+	//printf("aca.\n");
 	temp->next = NULL;
 	
 	if(head == NULL){
@@ -95,7 +99,7 @@ float peek(int secuence)
 		list = list->next;
 		
 	}
-	printf("No data in sec. %d\n", secuence);
+	//printf("No data in sec. %d\n", secuence);
 }
 
 /*int main()

@@ -75,7 +75,7 @@ void setSecuences(char *filename, int secsQty, float *secuencesp)
 	
 	for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
 	{
-		printf("%f\n", secuencesp[i]);
+		//printf("%f\n", secuencesp[i]);
 		fwrite(&secuencesp, sizeof(float) * secsQty * SIZE_SECUENCES, 1, filestream);
 	}
 	
@@ -344,7 +344,7 @@ float GetMinValueIndexFromSecs(float secs[][2], int qty)
 	return minValueIndexFound;
 }
 
-float *mwms(int secsQty, char *outputFilename)
+float *mwms(int secsQty, char *outputFilename, int debug)
 {
 	//int secsNum = secsQty;
 	
@@ -387,10 +387,12 @@ float *mwms(int secsQty, char *outputFilename)
 		}
 	}
 	
-	printf("final sorted nums:\n");
-	//for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
-	//	printf("%f\n", sortedNumbers[i]);
-	
+	if (debug == 1)
+	{
+		printf("final sorted nums:\n");
+		for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
+		printf("%f\n", sortedNumbers[i]);
+	}
 	setSecuences(outputFilename, secsQty, sortedNumbers);
 	// TODO: Return value.
 	//return sortedNumbers;
@@ -405,7 +407,7 @@ int main(int argc, char **argv)
 	char *inputFilename, *outputFilename;
 	int selection, secsQty, debug;
 	
-	while ((selection = getopt(argc, argv, "i:o:N:d")) != -1)
+	while ((selection = getopt(argc, argv, "i:o:N:d:")) != -1)
 	{
 		switch(selection) {
 			case 'i':
@@ -413,11 +415,13 @@ int main(int argc, char **argv)
 				break;
 			case 'o':
 				outputFilename = optarg;
+				break;
 			case 'N':
 				secsQty = atoi(optarg);
 				break;
 			case 'd':
 				debug = atoi(optarg);
+				break;
 		}
 	}
 	
@@ -449,8 +453,6 @@ int main(int argc, char **argv)
 	float a2[4] __attribute__((aligned(16)));
 	float a3[4] __attribute__((aligned(16)));
 	float a4[4] __attribute__((aligned(16)));
-
-	printf("Processing secuences...");
 
 	for (int i = 0; i < secsQty; i++)
 	{
@@ -502,7 +504,7 @@ int main(int argc, char **argv)
 	}
 
 	// 2.5.Multiway merge sort (MWMS).
-	float *sortedNumbers = mwms(secsQty, outputFilename);
+	float *sortedNumbers = mwms(secsQty, outputFilename, debug);
 	/*printf("final sorted nums:\n");
 	for (int i = 0; i < secsQty * SIZE_SECUENCES - 1; i++)
 		printf("%f, ", sortedNumbers[i]);*/

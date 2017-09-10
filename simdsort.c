@@ -9,10 +9,11 @@
 __m128 bmnSubSec1, bmnSubSec2;
 __m128 inRegSubSec1, inRegSubSec2, inRegSubSec3, inRegSubSec4;
 
+
+// BEGIN Implementing stack routines.
 float *stack;
 int *stackCount;
 
-//////////////////////////////////////////////////////////////
 void push(float value, int secuence)
 {
 	stackCount[secuence]++;
@@ -44,7 +45,7 @@ int isStackEmpty(int secuence)
 	else
 		return 0;
 }
-//////////////////////////////////////////////////////////////
+// END Implementing stack routines.
 
 float *getSecuencesStatic()
 {
@@ -63,6 +64,7 @@ float *getSecuencesStatic()
 	return secuences;
 }
 
+// Writing ordered secuences in file.
 void setSecuences(char *filename, int secsQty, float *secuencesp)
 {
 	FILE *filestream = fopen(filename, "w+b");
@@ -82,6 +84,7 @@ void setSecuences(char *filename, int secsQty, float *secuencesp)
 	fclose(filestream);
 }
 
+// Getting secuences from file to order.
 void getSecuences(char *filename, int secsQty, float *secuencesp)
 {
 	//float secuences[SIZE_SECUENCES * secsQty];
@@ -141,6 +144,7 @@ void getSecuences(char *filename, int secsQty, float *secuencesp)
     close(fichero);
 }*/
 
+// Transform sub secuences distribution, to arrange in a way properly to operate in SIMD routines.
 __m128 arrangeBmnSubSecs(__m128 subSec1, __m128 subSec2, int subSecNumber)
 {	
 	__m128 arrangedSubSec1, arrangedSubSec2, arrangedSubSecFinal;
@@ -165,6 +169,7 @@ __m128 arrangeBmnSubSecs(__m128 subSec1, __m128 subSec2, int subSecNumber)
 	return arrangedSubSecFinal;
 }
 
+// Bitonic merge network.
 void bmn(__m128 subSec1, __m128 subSec2)
 {
 	// Get two 4-lenght ascending ordered secuences.
@@ -194,6 +199,7 @@ void bmn(__m128 subSec1, __m128 subSec2)
 	
 }
 
+// Traspose a matrix.
 void transposeRegisterMatrix(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 {
 	__m128 arranged1 = arrangeBmnSubSecs(subSec1, subSec2, 1);
@@ -212,6 +218,7 @@ void transposeRegisterMatrix(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m
 	printf("inRegSubSec4: %f %f %f %f\n", inRegSubSec4[0], inRegSubSec4[1], inRegSubSec4[2], inRegSubSec4[3]);*/
 }
 
+// Order two-pair registers, ascending.
 void inRegisterSorting(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 {
 	__m128 subSecAux;
@@ -248,11 +255,13 @@ void inRegisterSorting(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 su
 	transposeRegisterMatrix(subSec1, subSec2, subSec3, subSec4);
 }
 
+// Invert a sub secuence.
 __m128 invertSubSec(__m128 subSec)
 {
 	return _mm_shuffle_ps(subSec, subSec, _MM_SHUFFLE(0, 1, 2, 3));
 }
 
+// Join two sub secuences to get one ordered secuence.
 float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 {
 	// Get a secuence lenght 16.
@@ -299,18 +308,10 @@ float *mergeSimd(__m128 subSec1, __m128 subSec2, __m128 subSec3, __m128 subSec4)
 	return sortedSec;
 }
 
-int areQuequesEmpty(int numQueues)
-{
-	for (int i = 0; i < numQueues; i++)
-	{
-		if (peek(i) != 0)
-			return 0;
-	}
-	
-	return 1;
-}
-
 float minValueIndexFound;
+
+// Ask for number of secuence with minimun value 
+// (among a collection of minimun value of secuences).
 float GetMinValueIndexFromSecs(float secs[][2], int qty)
 {
 	const int secValue = 0;
@@ -344,6 +345,10 @@ float GetMinValueIndexFromSecs(float secs[][2], int qty)
 	return minValueIndexFound;
 }
 
+// Multiway Merge Sort.
+// Order a collections of secuences, 
+// invoques method to save secuences in a file
+// and prints ordered secuences on screen.
 float *mwms(int secsQty, char *outputFilename, int debug)
 {
 	//int secsNum = secsQty;

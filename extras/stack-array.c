@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #define TOTAL_SECUENCES 16
 
-float stack[][TOTAL_SECUENCES];
-int stackCount[];
+float *stack;
+int *stackCount;
 
 void push(float value, int secuence)
 {
 	stackCount[secuence]++;
-	stack[secuence][stackCount[secuence]] = value;
+	//stack[secuence][stackCount[secuence]] = value;
+	stack[TOTAL_SECUENCES * secuence + stackCount[secuence]] = value;
 }
 
 float pop(int secuence)
@@ -16,15 +17,16 @@ float pop(int secuence)
 	if (stackCount[secuence] == 0)
 		return 0;
 		
-	float value = stack[secuence][stackCount[secuence]];
+	float value = stack[TOTAL_SECUENCES * secuence + stackCount[secuence]];
 	stackCount[secuence]--;
+	return value;
 }
 
 float peek(int secuence)
 {
 	if (stackCount[secuence] == 0)
 		return 0;	
-	return stack[secuence][stackCount[secuence]];
+	return stack[TOTAL_SECUENCES * secuence + stackCount[secuence]];
 }
 
 int isStackEmpty(int secuence)
@@ -37,6 +39,10 @@ int isStackEmpty(int secuence)
 
 int main()
 {
+	int secsQty = 3;
+	stack = (float *)malloc(secsQty * TOTAL_SECUENCES * sizeof(float));
+	stackCount = (int *)malloc(secsQty * sizeof(int));
+	
 	// Secuence I.
 	push(12, 0);
 	push(15, 0);
@@ -67,4 +73,8 @@ int main()
 		printf("I'm Empty.\n");
 		
 	printf("peek sec. II: %f\n", peek(1));
+	
+	pop(2);
+	pop(2);
+	printf("peek sec. III: %f\n", peek(2));
 }

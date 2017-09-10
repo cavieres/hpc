@@ -63,6 +63,25 @@ float *getSecuencesStatic()
 	return secuences;
 }
 
+void setSecuences(char *filename, int secsQty, float *secuencesp)
+{
+	FILE *filestream = fopen(filename, "w+b");
+	
+	if (!filestream)
+	{
+		printf("Couldn't open file.\n");
+		return 1;
+	}
+	
+	for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
+	{
+		printf("%f\n", secuencesp[i]);
+		fwrite(&secuencesp, sizeof(float) * secsQty * SIZE_SECUENCES, 1, filestream);
+	}
+	
+	fclose(filestream);
+}
+
 void getSecuences(char *filename, int secsQty, float *secuencesp)
 {
 	//float secuences[SIZE_SECUENCES * secsQty];
@@ -73,7 +92,8 @@ void getSecuences(char *filename, int secsQty, float *secuencesp)
 	
 	if (!filestream)
 	{
-		printf("No se pudo abrir archivo.\n");
+		printf("Couldn't open file.\n");
+		return 1;
 	}
 	
 
@@ -324,7 +344,7 @@ float GetMinValueIndexFromSecs(float secs[][2], int qty)
 	return minValueIndexFound;
 }
 
-float *mwms(int secsQty)
+float *mwms(int secsQty, char *outputFilename)
 {
 	//int secsNum = secsQty;
 	
@@ -368,11 +388,10 @@ float *mwms(int secsQty)
 	}
 	
 	printf("final sorted nums:\n");
-	for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
-		printf("%f\n", sortedNumbers[i]);
+	//for (int i = 0; i < secsQty * SIZE_SECUENCES; i++)
+	//	printf("%f\n", sortedNumbers[i]);
 	
-	
-	
+	setSecuences(outputFilename, secsQty, sortedNumbers);
 	// TODO: Return value.
 	//return sortedNumbers;
 }
@@ -383,8 +402,8 @@ int main(int argc, char **argv)
 	
 	printf("LAB1: SIMD-SSE\n");
 	
-	char *inputFilename;
-	int selection, secsQty;
+	char *inputFilename, *outputFilename;
+	int selection, secsQty, debug;
 	
 	while ((selection = getopt(argc, argv, "i:o:N:d")) != -1)
 	{
@@ -392,9 +411,13 @@ int main(int argc, char **argv)
 			case 'i':
 				inputFilename = optarg;
 				break;
+			case 'o':
+				outputFilename = optarg;
 			case 'N':
 				secsQty = atoi(optarg);
 				break;
+			case 'd':
+				debug = atoi(optarg);
 		}
 	}
 	
@@ -427,12 +450,10 @@ int main(int argc, char **argv)
 	float a3[4] __attribute__((aligned(16)));
 	float a4[4] __attribute__((aligned(16)));
 
-	printf("Processing secuence ");
+	printf("Processing secuences...");
 
 	for (int i = 0; i < secsQty; i++)
 	{
-		if (i % 100 == 0)
-			printf("%d... ", i);
 
 		memcpy(a1, (sec + 0 + SIZE_SECUENCES * i), SUB_SECUENCES * 4);
 		memcpy(a2, (sec + 4 + SIZE_SECUENCES * i), SUB_SECUENCES * 4);
@@ -481,7 +502,7 @@ int main(int argc, char **argv)
 	}
 
 	// 2.5.Multiway merge sort (MWMS).
-	float *sortedNumbers = mwms(secsQty);
+	float *sortedNumbers = mwms(secsQty, outputFilename);
 	/*printf("final sorted nums:\n");
 	for (int i = 0; i < secsQty * SIZE_SECUENCES - 1; i++)
 		printf("%f, ", sortedNumbers[i]);*/

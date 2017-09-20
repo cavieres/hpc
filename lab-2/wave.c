@@ -6,9 +6,9 @@
 
 float *waveSpace, *waveSpaceTMin1, *waveSpaceTMin2;
 
-int setWaveSpace(int iteration, int sizeGrid, char *filename)
+int setWaveSpace(int N, char *f)
 {
-	FILE *filestream = fopen(filename, "w+b");
+	FILE *filestream = fopen(f, "w+b");
 	
 	if (!filestream)
 	{
@@ -16,13 +16,42 @@ int setWaveSpace(int iteration, int sizeGrid, char *filename)
 		return 1;
 	}
 	
-	for (int i = 0; i < sizeGrid; i++)
+	for (int i = 0; i < N; i++)
 	{
-		for (int j = 0; j < sizeGrid; j++)
+		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
+		for (int j = 0; j < N; j++)
 		{
-			//fwrite(&waveSpace, sizeof(float) * sizeGrid * sizeGrid, 1, filestream);
-			printf("%f;", waveSpace[sizeGrid * i + j]);
-		
+			//fwrite(&waveSpace[N * i + j], sizeof(float), N * N, filestream);
+			//printf("%f;", waveSpace[N * i + j]);
+		}
+		//printf("\n");
+	}
+	
+	fclose(filestream);
+}
+
+int getWaveSpace(int N, char *f)
+{
+	FILE *filestream = fopen(f, "r+b");
+	float ws[N * N];
+
+	if (!filestream)
+	{
+		printf("Couldn't open file.\n");
+		return 1;
+	}
+
+fread(&ws, sizeof(float), N * N, filestream);
+	for (int i = 0; i < N; i++)
+	{
+		//fread(&ws, sizeof(float), N * N, filestream);
+	}
+	
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			printf("%f;", ws[N * i + j]);
 		}
 		printf("\n");
 	}
@@ -99,6 +128,8 @@ int main(int argc, char **argv)
 				break;
 			case 1:
 				fillSpaceFirstStep(N, c, dt, dd);
+				memcpy(waveSpaceTMin2, waveSpaceTMin1, N * N * sizeof(float));
+				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
 				break;
 			default:
 				fillSpaceTSteps(N, T, c, dt, dd);
@@ -106,7 +137,9 @@ int main(int argc, char **argv)
 		}
 	
 		if (step == t)
-			setWaveSpace(t, N, f);
+			setWaveSpace(N, f);
+			
+		getWaveSpace(N, f);
 	}
 
 

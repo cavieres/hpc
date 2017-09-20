@@ -37,7 +37,7 @@ int getWaveSpace(int N, char *f)
 
 	if (!filestream)
 	{
-		printf("Couldn't open file.\n");
+		printf("Couldn't open file: '%s'\n", f);
 		return 1;
 	}
 
@@ -105,6 +105,7 @@ int main(int argc, char **argv)
 				break;
 			case 'f':
 				f = optarg;
+				remove(f);
 				break;
 			case 't':
 				t = atoi(optarg);

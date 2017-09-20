@@ -36,7 +36,7 @@ int getWaveSpace(int N, char *f)
 
 	if (!filestream)
 	{
-		printf("Couldn't open file: '%s'\n", f);
+		//printf("Couldn't open file: '%s'\n", f);
 		return 1;
 	}
 
@@ -70,9 +70,9 @@ void initializeSpace(int N)
 
 void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
 {
-
-	
-	
+	for (int i = 1; i < N; i++)
+		for (int j = 1; j < N - 1; j++)
+			waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
 }
 
 int main(int argc, char **argv)
@@ -129,13 +129,15 @@ int main(int argc, char **argv)
 				break;
 			default:
 				fillSpaceTSteps(N, T, c, dt, dd);
+				memcpy(waveSpaceTMin2, waveSpaceTMin1, N * N * sizeof(float));
+				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
 				break;
 		}
 	
 		if (step == t)
 			setWaveSpace(N, f);
 			
-		getWaveSpace(N, f);
+		//getWaveSpace(N, f);
 	}
 
 

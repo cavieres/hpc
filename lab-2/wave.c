@@ -19,12 +19,11 @@ int setWaveSpace(int N, char *f)
 	for (int i = 0; i < N; i++)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
-		for (int j = 0; j < N; j++)
+		/*for (int j = 0; j < N; j++)
 		{
-			//fwrite(&waveSpace[N * i + j], sizeof(float), N * N, filestream);
-			//printf("%f;", waveSpace[N * i + j]);
+			printf("%f;", waveSpace[N * i + j]);
 		}
-		//printf("\n");
+		printf("\n");*/
 	}
 	
 	fclose(filestream);
@@ -41,11 +40,7 @@ int getWaveSpace(int N, char *f)
 		return 1;
 	}
 
-fread(&ws, sizeof(float), N * N, filestream);
-	for (int i = 0; i < N; i++)
-	{
-		//fread(&ws, sizeof(float), N * N, filestream);
-	}
+	fread(&ws, sizeof(float), N * N, filestream);
 	
 	for (int i = 0; i < N; i++)
 	{

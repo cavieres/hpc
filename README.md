@@ -21,5 +21,5 @@ make && ./simdsort -i n268435456.raw -o ordenada.raw -N 32 -d 1
 ### Compile and execution:
 
 ```
-gcc wave.c -o wave && ./wave -N 10 -T 1 -H 1 -f wave.raw -t 1
+gcc wave.c -o wave -fopenmp && ./wave -N 10 -T 1 -H 1 -f wave.raw -t 1
 ```

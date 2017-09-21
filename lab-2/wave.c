@@ -5,6 +5,8 @@
 #include <string.h>
 
 float *waveSpace, *waveSpaceTMin1, *waveSpaceTMin2;
+int H;
+
 
 int setWaveSpace(int N, char *f)
 {
@@ -71,13 +73,18 @@ void initializeSpace(int N)
 void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
 {
 	for (int i = 1; i < N; i++)
+	#pragma omp parallel num_threads(H)
+	{
+		//printf("threads: %d\n", omp_get_thread_num());
+		#pragma omp for
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
+	}
 }
 
 int main(int argc, char **argv)
 {
-	int N, T, H, t;
+	int N, T, t;
 	float c = 1.0;
 	float dt = 0.1;
 	float dd = 2.0;

@@ -3,6 +3,7 @@
 #include <math.h>
 #include <getopt.h>
 #include <string.h>
+#include <omp.h>
 
 float *waveSpace, *waveSpaceTMin1, *waveSpaceTMin2;
 int H;
@@ -72,11 +73,11 @@ void initializeSpace(int N)
 
 void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
 {
-	for (int i = 1; i < N; i++)
 	#pragma omp parallel num_threads(H)
+	#pragma omp for schedule(static, 4)
+	for (int i = 1; i < N; i++)
 	{
 		//printf("threads: %d\n", omp_get_thread_num());
-		#pragma omp for
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
 	}
@@ -84,6 +85,8 @@ void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
 
 int main(int argc, char **argv)
 {
+	double start = omp_get_wtime();
+	
 	int N, T, t;
 	float c = 1.0;
 	float dt = 0.1;
@@ -146,13 +149,10 @@ int main(int argc, char **argv)
 			
 		//getWaveSpace(N, f);
 	}
-
-
-
-
-	//fillSpace(N, T, H, F, t, c, dt, dd);
-
-	//setWaveSpace(t, N, f);
-
+	
+	double end = omp_get_wtime();
+	
+	printf("Time spent: %f\n", end - start);
+	
 	return 0;
 }

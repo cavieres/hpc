@@ -1,6 +1,8 @@
+wave
 simdsort
 stack-array
 *.exe
 *.raw
 *.zip
 *.txt
+*.csv

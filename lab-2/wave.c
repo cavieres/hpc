@@ -59,6 +59,8 @@ int getWaveSpace(int N, char *f)
 
 void fillSpaceFirstStep(int N, float c, float dt, float dd)
 {
+	#pragma omp parallel num_threads(H)
+	#pragma omp for schedule(static, 4)
 	for (int i = 1; i < N; i++)
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = waveSpaceTMin1[N * i + j] + (c * c)/2 * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);

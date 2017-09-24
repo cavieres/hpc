@@ -1,6 +1,7 @@
 wave
 simdsort
 stack-array
+exec-its-bchmks
 *.exe
 *.raw
 *.zip

@@ -23,11 +23,9 @@ int setWaveSpace(int N, char *f)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
 		// Print wave space as CSV format.
-		for (int j = 0; j < N; j++)
-		{
+		/*for (int j = 0; j < N; j++)
 			printf("%f;", waveSpace[N * i + j]);
-		}
-		printf("\n");
+		printf("\n");*/
 	}
 	
 	fclose(filestream);
@@ -49,9 +47,7 @@ int getWaveSpace(int N, char *f)
 	for (int i = 0; i < N; i++)
 	{
 		for (int j = 0; j < N; j++)
-		{
 			printf("%f;", ws[N * i + j]);
-		}
 		printf("\n");
 	}
 	
@@ -75,20 +71,12 @@ void fillSpaceFirstStep(int N, float c, float dt, float dd)
 
 void initializeSpace(int N)
 {
-	// Print wave space as CSV format.
-	for (int i = 0; i < N; i++)
-	{
-		for (int j = 0; j < N; j++)
-		{
-			waveSpace[N * i + j] = 0;
-		}
-	}
+	for (int i = 0; i < N * N; i++)
+		waveSpace[i] = 0;
+	
 	for (int i = 0.4 * N; i < 0.6 * N; i++)
 		for (int j = 0.4 * N; j < 0.6 * N; j++)
-			{
 			waveSpace[N * i + j] = 20;
-			//printf("%f ", waveSpace[N * i + j]);
-			}
 	
 	// Print wave space as CSV format.
 	/*for (int i = 0; i < N; i++)
@@ -106,11 +94,8 @@ void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
 	#pragma omp parallel num_threads(H)
 	#pragma omp for schedule(static, 4)
 	for (int i = 1; i < N; i++)
-	{
-		//printf("threads: %d\n", omp_get_thread_num());
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
-	}
 }
 
 int main(int argc, char **argv)
@@ -148,6 +133,11 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	if (t > T)
+	{
+		printf("Error: output iteration can't be bigger than step quantity.\n");
+		exit(1);
+	}
 	
 	waveSpace = (float *)malloc(N * N * sizeof(float));
 	waveSpaceTMin1 = (float *)malloc(N * N * sizeof(float));
@@ -183,7 +173,7 @@ int main(int argc, char **argv)
 	double end = omp_get_wtime();
 	
 	//printf("Time spent: %f\n", end - start);
-	//printf("%d;%d;%d;%f\n",N,T,H, end - start);
+	printf("%d;%d;%d;%f\n",N,T,H, end - start);
 	
 	return 0;
 }

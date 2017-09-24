@@ -23,3 +23,10 @@ make && ./simdsort -i n268435456.raw -o ordenada.raw -N 32 -d 1
 ```
 gcc wave.c -o wave -fopenmp && ./wave -N 10 -T 1 -H 1 -f wave.raw -t 1
 ```
+
+### Bulk execution
+```
+gcc exec-its-bchmks.c -o exec-its-bchmks && ./exec-its-bchmks -> exec-its-bchmks.txt
+chmod +x lab2-benchmark.sh
+./lab2-benchmark.sh > lab2-benchmark.csv
+```

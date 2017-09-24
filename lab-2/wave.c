@@ -22,11 +22,12 @@ int setWaveSpace(int N, char *f)
 	for (int i = 0; i < N; i++)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
-		/*for (int j = 0; j < N; j++)
+		// Print wave space as CSV format.
+		for (int j = 0; j < N; j++)
 		{
 			printf("%f;", waveSpace[N * i + j]);
 		}
-		printf("\n");*/
+		printf("\n");
 	}
 	
 	fclose(filestream);
@@ -64,13 +65,40 @@ void fillSpaceFirstStep(int N, float c, float dt, float dd)
 	for (int i = 1; i < N; i++)
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = waveSpaceTMin1[N * i + j] + (c * c)/2 * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
+	
+	// Print wave space as CSV format.
+	/*for (int i = 0; i < N; i++)
+		for (int j = 0; j < N; j++)
+			printf("%f;", waveSpace[N * i + j]);*/
+
 }
 
 void initializeSpace(int N)
 {
+	// Print wave space as CSV format.
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			waveSpace[N * i + j] = 0;
+		}
+	}
 	for (int i = 0.4 * N; i < 0.6 * N; i++)
 		for (int j = 0.4 * N; j < 0.6 * N; j++)
+			{
 			waveSpace[N * i + j] = 20;
+			//printf("%f ", waveSpace[N * i + j]);
+			}
+	
+	// Print wave space as CSV format.
+	/*for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			printf("%f;", waveSpace[N * i + j]);
+		}
+		printf("\n");
+	}*/
 }
 
 void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
@@ -154,7 +182,8 @@ int main(int argc, char **argv)
 	
 	double end = omp_get_wtime();
 	
-	printf("Time spent: %f\n", end - start);
+	//printf("Time spent: %f\n", end - start);
+	//printf("%d;%d;%d;%f\n",N,T,H, end - start);
 	
 	return 0;
 }

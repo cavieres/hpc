@@ -19,11 +19,12 @@ int setWaveSpace(int N, char *f)
 	for (int i = 0; i < N; i++)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
-		/*for (int j = 0; j < N; j++)
+		// Print wave space as CSV format.
+		for (int j = 0; j < N; j++)
 		{
 			printf("%f;", waveSpace[N * i + j]);
 		}
-		printf("\n");*/
+		printf("\n");
 	}
 	
 	fclose(filestream);
@@ -139,13 +140,6 @@ int main(int argc, char **argv)
 			
 		//getWaveSpace(N, f);
 	}
-
-
-
-
-	//fillSpace(N, T, H, F, t, c, dt, dd);
-
-	//setWaveSpace(t, N, f);
 
 	return 0;
 }

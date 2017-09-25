@@ -7,3 +7,14 @@ exec-its-bchmks
 *.zip
 *.txt
 *.csv
+
+#LaTeX files.
+*.ini
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.pdf
+*.xml
+*.gz

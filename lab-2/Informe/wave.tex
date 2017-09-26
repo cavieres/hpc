@@ -90,6 +90,25 @@ El tiempo tomado para realizar la ejecución se representa en la siguiente figur
 	\label{fig:Figure1}
 \end{figure}
 
+Se observa que hay una suave caída en el tiempo a medida que aumenta el número de hilos, llegando a los siguientes m+inimos: 
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{T (seg.)} \\ \midrule
+2000                         & 8                            & 0,142299                     \\
+4000                         & 6                            & 0,267584                     \\
+8000                         & 8                            & 0,503911                     \\ \bottomrule
+\end{tabular}
+\end{table}
+
+A partir de estos mínimos, tiempo se estabiliza, sin haber mayores cambios hasta la última iteración.
+
 \subsubsection{N = 256}
 Aumentando el tamaño de grilla, se descubre lo siguiente:
 
@@ -99,8 +118,27 @@ Aumentando el tamaño de grilla, se descubre lo siguiente:
 	\label{fig:Figure2}
 \end{figure}
 
+El comportamiento de la curva en comparación al anterior es equivalente, registrando los siguientes mínimos:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{T (seg.)} \\ \midrule
+2000                         & 8                            & 0,569594                     \\
+4000                         & 8                            & 1,036259                     \\
+8000                         & 8                            & 1,899529                     \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Hay tan solo un aumento en el tiempo mínimo por la particularidad de estar trabajando sobre una grilla de mayor dimensión.
+
 \subsection{Speedup}
-La métrica utilizada para calcular el \textit{speedup} será el relativo, el cual se expresa de la siguiente forma:
+La métrica utilizada para calcular el \textit{speedup} fue el relativo, el cual se expresa de la siguiente forma:
 
 \[
 	S_{relativo}(I, H) = \frac{tiempo\, resolv.\, I\, usando\, programa\, Q\, y\, 1\, hebra}{tiempo\, resolv.\, I\, usando\, programa\, Q\, y\, H\, hebras}
@@ -115,14 +153,52 @@ El resultado del análisis de rendimiento arroja lo siguiente:
 	\label{fig:Figure3}
 \end{figure}
 
+Para los tres pasos analizados, se observa un notorio incremento hasta alrededor de la ejecución con 8 hebras, a partir de donde se precipita hasta cerca de la hebra 10, manteniendo sucesivamente un valor constante.
+
+Los máximos para cada paso son:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{T (seg.)} \\ \midrule
+2000                         & 8                            & 4,4754847                    \\
+4000                         & 8                            & 4,5470394                    \\
+8000                         & 8                            & 4,7375529                    \\ \bottomrule
+\end{tabular}
+\end{table}
+
 \subsubsection{N = 256}
-Mismo análisis con tamaño de grilla incrementado produce:
+Mismo análisis con tamaño de grilla incrementado produce sutilmente mejores resultados, donde la curva en toda su prolongación tiene un pequeño incremento.
 
 \begin{figure}[h]
 	\includegraphics[width=\columnwidth]{srel-256px.png}
 	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
 	\label{fig:Figure4}
 \end{figure}
+
+Junto con lo anterior, la tendencia de la curva es similar a aquella obtenida con el tamaño de grilla menor.
+
+Sus máximos para cada paso son los siguientes:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{T (seg.)} \\ \midrule
+2000                         & 8                            & 4,7063189                    \\
+4000                         & 8                            & 4,9117817                    \\
+8000                         & 8                            & 5,1620396                    \\ \bottomrule
+\end{tabular}
+\end{table}
 
 \FloatBarrier
 
@@ -140,17 +216,53 @@ Mismo análisis con tamaño de grilla incrementado produce:
 
 \begin{figure}[h]
 	\includegraphics[width=\columnwidth]{efic-128px.png}
-	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
+	\caption{Eficiencia para T = \{2000, 4000, 8000\}}
 	\label{fig:Figure5}
 \end{figure}
+
+Hay un decremento sostenido del indicador hasta la ejecución con 3 hebras, desde donde curva se estabiliza.
+
+El punto de inflexión dado con H = 3 para cada iteración tiene el siguiente valor:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{E(H)} \\ \midrule
+2000                         & 3                            & 0,3718947                \\
+4000                         & 3                            & 0,3491872                \\
+8000                         & 3                            & 0,352224                 \\ \bottomrule
+\end{tabular}
+\end{table}
 
 \subsubsection{N = 256}
 Mismo análisis con tamaño de grilla incrementado produce:
 
 \begin{figure}[h]
 	\includegraphics[width=\columnwidth]{efic-256px.png}
-	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
+	\caption{Eficiencia para T = \{2000, 4000, 8000\}}
 	\label{fig:Figure6}
 \end{figure}
+
+La curva se comporta de manera similar al numero de pasos anterior, con sus respectivos valores en la curva de inflexión:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{E(H)} \\ \midrule
+2000                         & 3                            & 0,4842093                \\
+4000                         & 3                            & 0,4627912                \\
+8000                         & 3                            & 0,4759161                \\ \bottomrule
+\end{tabular}
+\end{table}
 
 \end{document}

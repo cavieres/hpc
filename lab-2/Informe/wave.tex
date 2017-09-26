@@ -7,6 +7,8 @@
 
 \usepackage{listings}
 
+\usepackage[section]{placeins}
+
 \DeclareLanguageMapping{spanish}{spanish-apa}
 \addbibresource{bibliography.bib}
 
@@ -19,11 +21,11 @@
 
 \abstract{Se presenta un resumen del desarrollo del laboratorio 2 de la asignatura High Performance Computing dictado por el profesor Dr. Fernando Rannou, exponiendo resultados de las pruebas de rendimiento computacional sobre la aplicación paralelizada.}
 
-\keywords{HPC, OpenMP, parallel, schroedinger}
+\keywords{HPC, OpenMP, Parallel, Schroedinger}
 
 \begin{document}
 \maketitle
-El trabajo comienza con la creación de un algoritmo secuencial que simula el comportamiento de una onda bajo la ley de Schoedinger.
+El trabajo comienza con la creación de un algoritmo secuencial que simula el comportamiento de una onda bajo la ley de Schroedinger.
 
 Luego se identifican las piezas de código que pueden ser paralelizables para utilizar en éstas estrategias basadas en OpenMP.
 
@@ -73,18 +75,56 @@ El análisis de rendimiento se realizó bajo los siguientes parámetros y valore
 	\item pasos = \{2000, 4000, 8000\}
 \end{itemize}
 
+Los tamaños de imagen considerados para el estudio son de 128 y 256 pixeles.
+
+\subsection{Tiempo}
+
+\subsubsection{N = 128}
+El tiempo tomado para realizar la ejecución se representa en la siguiente figura:
+
+\clearpage
+
+\begin{figure}[h]
+	\includegraphics[width=\columnwidth]{srel-128px.png}
+	\caption{Tiempo ejecución para T = \{2000, 4000, 8000\}}
+	\label{fig:Figure1}
+\end{figure}
+
+\subsubsection{N = 256}
+Aumentando el tamaño de grilla, se descubre lo siguiente:
+
+\begin{figure}[h]
+	\includegraphics[width=\columnwidth]{srel-256px.png}
+	\caption{Tiempo ejecución para T = \{2000, 4000, 8000\}}
+	\label{fig:Figure2}
+\end{figure}
+
 \subsection{Speedup}
-La métrica utilizada para calcular el \textit{speedup} será el relativo, el cual se expresa de la siguente forma:
+La métrica utilizada para calcular el \textit{speedup} será el relativo, el cual se expresa de la siguiente forma:
 
 \[
-	S_{relativo}(I, H) = \frac{tiempo\, para\, resolver\, I\, usando\, programa\, Q\, y\, 1\, hebra}{tiempo\, para\, resolver\, I\, usando\, programa\, Q\, y\, H\, hebras}
+	S_{relativo}(I, H) = \frac{tiempo\, resolv.\, I\, usando\, programa\, Q\, y\, 1\, hebra}{tiempo\, resolv.\, I\, usando\, programa\, Q\, y\, H\, hebras}
 \]
 
-Los resultados se ilustran en la siguiente gráfica:
+\subsubsection{N = 128}
+El resultado del análisis de rendimiento arroja lo siguiente:
 
-(grafico)
+\begin{figure}[h]
+	\includegraphics[width=\columnwidth]{srel-128px.png}
+	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
+	\label{fig:Figure3}
+\end{figure}
 
-Como se observa, ...
+\subsubsection{N = 256}
+Mismo análisis con tamaño de grilla incrementado produce:
+
+\begin{figure}[h]
+	\includegraphics[width=\columnwidth]{srel-256px.png}
+	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
+	\label{fig:Figure4}
+\end{figure}
+
+\FloatBarrier
 
 \subsection{Eficiencia}
 La eficiencia fue calculada por medio la siguiente ecuación:
@@ -95,8 +135,22 @@ La eficiencia fue calculada por medio la siguiente ecuación:
 
 Los resultados arrojados por el cálculo de la eficiencia son los siguientes:
 
-...
+\subsubsection{N = 128}
+Mismo análisis con tamaño de grilla incrementado produce:
 
-\printbibliography
+\begin{figure}[h]
+	\includegraphics[width=\columnwidth]{efic-128px.png}
+	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
+	\label{fig:Figure5}
+\end{figure}
+
+\subsubsection{N = 256}
+Mismo análisis con tamaño de grilla incrementado produce:
+
+\begin{figure}[h]
+	\includegraphics[width=\columnwidth]{efic-256px.png}
+	\caption{Speedup relativo para T = \{2000, 4000, 8000\}}
+	\label{fig:Figure6}
+\end{figure}
 
 \end{document}

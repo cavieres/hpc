@@ -18,3 +18,7 @@ exec-its-bchmks
 *.pdf
 *.xml
 *.gz
+
+#RStudio profile files.
+.RData
+.Rhistory

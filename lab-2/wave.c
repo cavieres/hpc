@@ -8,7 +8,7 @@
 float *waveSpace, *waveSpaceTMin1, *waveSpaceTMin2;
 int H;
 
-
+// Save wave state as binary file.
 int setWaveSpace(int N, char *f)
 {
 	FILE *filestream = fopen(f, "w+b");
@@ -22,15 +22,12 @@ int setWaveSpace(int N, char *f)
 	for (int i = 0; i < N; i++)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
-		// Print wave space as CSV format.
-		/*for (int j = 0; j < N; j++)
-			printf("%f;", waveSpace[N * i + j]);
-		printf("\n");*/
 	}
 	
 	fclose(filestream);
 }
 
+// Read a wave state from binary file.
 int getWaveSpace(int N, char *f)
 {
 	FILE *filestream = fopen(f, "r+b");
@@ -38,7 +35,6 @@ int getWaveSpace(int N, char *f)
 
 	if (!filestream)
 	{
-		//printf("Couldn't open file: '%s'\n", f);
 		return 1;
 	}
 
@@ -54,6 +50,7 @@ int getWaveSpace(int N, char *f)
 	fclose(filestream);
 }
 
+// Filling wave space with T = 1.
 void fillSpaceFirstStep(int N, float c, float dt, float dd)
 {
 	#pragma omp parallel num_threads(H)
@@ -61,14 +58,10 @@ void fillSpaceFirstStep(int N, float c, float dt, float dd)
 	for (int i = 1; i < N; i++)
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = waveSpaceTMin1[N * i + j] + (c * c)/2 * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
-	
-	// Print wave space as CSV format.
-	/*for (int i = 0; i < N; i++)
-		for (int j = 0; j < N; j++)
-			printf("%f;", waveSpace[N * i + j]);*/
-
 }
 
+// Setting wave space as a grid with values "20" in center
+// sorrounding with zero values.
 void initializeSpace(int N)
 {
 	for (int i = 0; i < N * N; i++)
@@ -77,18 +70,9 @@ void initializeSpace(int N)
 	for (int i = 0.4 * N; i < 0.6 * N; i++)
 		for (int j = 0.4 * N; j < 0.6 * N; j++)
 			waveSpace[N * i + j] = 20;
-	
-	// Print wave space as CSV format.
-	/*for (int i = 0; i < N; i++)
-	{
-		for (int j = 0; j < N; j++)
-		{
-			printf("%f;", waveSpace[N * i + j]);
-		}
-		printf("\n");
-	}*/
 }
 
+// Filling wave space with T > 1.
 void fillSpaceTSteps(int N, int T, float c, float dt, float dd)
 {
 	#pragma omp parallel num_threads(H)
@@ -139,10 +123,12 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
+	// Setting wave spaces, saving states t, t - 1 and t - 2.
 	waveSpace = (float *)malloc(N * N * sizeof(float));
 	waveSpaceTMin1 = (float *)malloc(N * N * sizeof(float));
 	waveSpaceTMin2 = (float *)malloc(N * N * sizeof(float));
 	
+	// Schroedinger ecuation, by a given step as input.
 	for (int step = 0; step <= T; step++)
 	{
 	
@@ -164,16 +150,14 @@ int main(int argc, char **argv)
 				break;
 		}
 	
+		// Save step image specified by parameter t.
 		if (step == t)
 			setWaveSpace(N, f);
-			
-		//getWaveSpace(N, f);
 	}
 	
 	double end = omp_get_wtime();
 	
-	//printf("Time spent: %f\n", end - start);
-	printf("%d;%d;%d;%f\n",N,T,H, end - start);
+	printf("Time spent: %f\n", end - start);
 	
 	return 0;
 }

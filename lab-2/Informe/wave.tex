@@ -12,7 +12,7 @@
 \DeclareLanguageMapping{spanish}{spanish-apa}
 \addbibresource{bibliography.bib}
 
-\title{HPC - LAb2: OpenMP}
+\title{HPC - Lab2: OpenMP}
 
 \author{Rubén Cavieres Carvajal}
 \affiliation{Universidad de Santiago de Chile}
@@ -90,13 +90,13 @@ El tiempo tomado para realizar la ejecución se representa en la siguiente figur
 	\label{fig:Figure1}
 \end{figure}
 
-Se observa que hay una suave caída en el tiempo a medida que aumenta el número de hilos, llegando a los siguientes m+inimos: 
+Se observa que hay una suave caída en el tiempo a medida que aumenta el número de hilos, llegando a los siguientes mínimos: 
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
-\begin{table}[]
+\begin{table}[h]
 \centering
-\caption{My caption}
+\caption{Mínimos de tiempo por iteraciones.}
 \label{my-label}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -118,13 +118,12 @@ Aumentando el tamaño de grilla, se descubre lo siguiente:
 	\label{fig:Figure2}
 \end{figure}
 
+
 El comportamiento de la curva en comparación al anterior es equivalente, registrando los siguientes mínimos:
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
-\begin{table}[]
+\begin{table}[h]
 \centering
-\caption{My caption}
+\caption{Mínimos de tiempo por iteraciones.}
 \label{my-label}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -136,6 +135,8 @@ El comportamiento de la curva en comparación al anterior es equivalente, regist
 \end{table}
 
 Hay tan solo un aumento en el tiempo mínimo por la particularidad de estar trabajando sobre una grilla de mayor dimensión.
+
+\FloatBarrier
 
 \subsection{Speedup}
 La métrica utilizada para calcular el \textit{speedup} fue el relativo, el cual se expresa de la siguiente forma:
@@ -157,11 +158,9 @@ Para los tres pasos analizados, se observa un notorio incremento hasta alrededor
 
 Los máximos para cada paso son:
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
-\begin{table}[]
+\begin{table}[h]
 \centering
-\caption{My caption}
+\caption{Máximo de speedup por iteraciones}
 \label{my-label}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -171,6 +170,8 @@ Los máximos para cada paso son:
 8000                         & 8                            & 4,7375529                    \\ \bottomrule
 \end{tabular}
 \end{table}
+
+\clearpage
 
 \subsubsection{N = 256}
 Mismo análisis con tamaño de grilla incrementado produce sutilmente mejores resultados, donde la curva en toda su prolongación tiene un pequeño incremento.
@@ -185,11 +186,9 @@ Junto con lo anterior, la tendencia de la curva es similar a aquella obtenida co
 
 Sus máximos para cada paso son los siguientes:
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
-\begin{table}[]
+\begin{table}[h]
 \centering
-\caption{My caption}
+\caption{Máximo de speedup por iteraciones}
 \label{my-label}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -222,13 +221,11 @@ Mismo análisis con tamaño de grilla incrementado produce:
 
 Hay un decremento sostenido del indicador hasta la ejecución con 3 hebras, desde donde curva se estabiliza.
 
-El punto de inflexión dado con H = 3 para cada iteración tiene el siguiente valor:
+El punto de inflexión dado con \textit{H = 3} para cada iteración tiene el siguiente valor:
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
 \begin{table}[]
 \centering
-\caption{My caption}
+\caption{Punto inflexión eficiencia por iteraciones}
 \label{my-label}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -240,7 +237,7 @@ El punto de inflexión dado con H = 3 para cada iteración tiene el siguiente va
 \end{table}
 
 \subsubsection{N = 256}
-Mismo análisis con tamaño de grilla incrementado produce:
+Mismo análisis con tamaño de grilla incrementado produce los resultados expresados en grilla.
 
 \begin{figure}[h]
 	\includegraphics[width=\columnwidth]{efic-256px.png}
@@ -250,11 +247,9 @@ Mismo análisis con tamaño de grilla incrementado produce:
 
 La curva se comporta de manera similar al numero de pasos anterior, con sus respectivos valores en la curva de inflexión:
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
-\begin{table}[]
+\begin{table}[h]
 \centering
-\caption{My caption}
+\caption{Punto inflexión eficiencia por iteraciones}
 \label{my-label}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -264,5 +259,12 @@ La curva se comporta de manera similar al numero de pasos anterior, con sus resp
 8000                         & 3                            & 0,4759161                \\ \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Conclusiones}
+A partir de la comparación de los resultados para cada variación de parámetro del algoritmo, se observa que las curvas de tiempo, \textit{speedup} y eficiencia se presentan similares, evidenciando que la estrategia de paralelización aplicada fue estática. 
+
+Esta característica de paralelización garantizó que el trabajo con hilos se realizara uniformemente dentro del bucle de construcción de grilla con imagen.
+
+Un inconveniente en el análisis de rendimiento fue que se contó con un computador de 8 núcleos, cuya característica no permitió extender el análisis con una mayor cantidad de cómputo que permitiera ver el comportamiento de la aplicación en un periodo de tiempo más extenso.
 
 \end{document}

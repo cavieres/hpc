@@ -30,3 +30,12 @@ gcc exec-its-bchmks.c -o exec-its-bchmks && ./exec-its-bchmks -> exec-its-bchmks
 chmod +x lab2-benchmark.sh
 ./lab2-benchmark.sh > lab2-benchmark.csv
 ```
+
+## Lab-3
+
+### Compile and execution:
+
+```
+nvcc wave.cu -Xcompiler -fopenmp
+```
+

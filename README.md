@@ -36,6 +36,6 @@ chmod +x lab2-benchmark.sh
 ### Compile and execution:
 
 ```
-nvcc wave.cu -Xcompiler -fopenmp
+nvcc wave.cu -Xcompiler -fopenmp && ./wave -N 512 -X 10 -Y 10 -T 10 -f wave.raw -t 10
 ```
 

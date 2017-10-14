@@ -19,6 +19,10 @@ int setWaveSpace(int N, char *f, float *waveSpace)
 	for (int i = 0; i < N; i++)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
+		// Print wave space as CSV format.
+		for (int j = 0; j < N; j++)
+			printf("%f;", waveSpace[N * i + j]);
+		printf("\n");
 	}
 	
 	fclose(filestream);
@@ -54,8 +58,6 @@ int getWaveSpace(int N, char *f)
 // Filling wave space with T = 1.
 __device__ void fillSpaceFirstStep(int N, float c, float dt, float dd, float *waveSpace, float *waveSpaceTMin1)
 {
-	#pragma omp parallel num_threads(H)
-	#pragma omp for schedule(static, 4)
 	for (int i = 1; i < N; i++)
 		for (int j = 1; j < N - 1; j++)
 			waveSpace[N * i + j] = waveSpaceTMin1[N * i + j] + (c * c)/2 * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
@@ -65,8 +67,11 @@ __device__ void fillSpaceFirstStep(int N, float c, float dt, float dd, float *wa
 // sorrounding with zero values.
 __device__ void initializeSpace(int N, float *waveSpace)
 {
-	for (int i = 0; i < N * N; i++)
-		waveSpace[i] = 0;
+	int m = blockIdx.y * blockDim.y + threadIdx.y;
+	//int n = blockIdx.x * blockDim.x + threadIdx.x;
+	
+	for (int i = 0; i < blockDim.x; i++)
+		waveSpace[m * blockDim.x + i] = 0;
 	
 	for (int i = 0.4 * N; i < 0.6 * N; i++)
 		for (int j = 0.4 * N; j < 0.6 * N; j++)
@@ -81,7 +86,7 @@ __device__ void fillSpaceTSteps(int N, int T, float c, float dt, float dd, float
 			waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
 }
 
-__global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2, int T, int N)
+__global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2, int T, int N, char *f, int t)
 {
 	float c = 1.0;
 	float dt = 0.1;
@@ -108,10 +113,11 @@ __global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *wav
 				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
 				break;
 		}
-	
+	break;
 		// Save step image specified by parameter t.
-		//if (step == t)
-		//	setWaveSpace(N, f);
+		if (step == t)
+			break;
+			//setWaveSpace(N, f, waveSpace);
 	}
 }
 
@@ -165,10 +171,12 @@ __host__ int main(int argc, char **argv)
 	sizeblocks.y = Y;
 
 	// Setting wave spaces, saving states t, t - 1 and t - 2.
-	float *waveSpace, *waveSpaceTMin1, *waveSpaceTMin2;
+	float *waveSpace;
+	waveSpace = (float *)malloc(N * N * sizeof(float));
+	/*float *waveSpace, *waveSpaceTMin1, *waveSpaceTMin2;
 	waveSpace = (float *)malloc(N * N * sizeof(float));
 	waveSpaceTMin1 = (float *)malloc(N * N * sizeof(float));
-	waveSpaceTMin2 = (float *)malloc(N * N * sizeof(float));
+	waveSpaceTMin2 = (float *)malloc(N * N * sizeof(float));*/
 	
 	// Setting wave spaces in GPU.
 	float *waveSpace_d, *waveSpaceTMin1_d, *waveSpaceTMin2_d;
@@ -177,22 +185,21 @@ __host__ int main(int argc, char **argv)
 	cudaMalloc((void**)&waveSpaceTMin2_d, N * N * sizeof(float));
 
 	// Copying values from CPU to GPU.
-	cudaMemcpy(waveSpace_d, waveSpace_d, N * N * sizeof(float), cudaMemcpyHostToDevice);
+	/*cudaMemcpy(waveSpace_d, waveSpace_d, N * N * sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(waveSpaceTMin1_d, waveSpaceTMin1_d, N * N * sizeof(float), cudaMemcpyHostToDevice);
-	cudaMemcpy(waveSpaceTMin2_d, waveSpaceTMin2_d, N * N * sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(waveSpaceTMin2_d, waveSpaceTMin2_d, N * N * sizeof(float), cudaMemcpyHostToDevice);*/
 
 	// Executing kernel.
-	schroedinger<<<numblocks,sizeblocks>>>(waveSpace, waveSpaceTMin1, waveSpaceTMin2, T, N);
+	schroedinger<<<numblocks,sizeblocks>>>(waveSpace_d, waveSpaceTMin1_d, waveSpaceTMin2_d, T, N, f, t);
 	cudaDeviceSynchronize();
 	
 	cudaMemcpy(waveSpace, waveSpace_d, N * N * sizeof(float), cudaMemcpyDeviceToHost);
 
-	for(int i=0; i < N * N; i++)
-		printf("waveSpace[%d] = %f\n", i, waveSpace[i]);
+	setWaveSpace(N, f, waveSpace);
 
-	//double end = omp_get_wtime();
+	double end = omp_get_wtime();
 	
-	//printf("Time spent: %f\n", end - start);
+	printf("Time spent: %f\n", end - start);
 	
 	return 0;
 }

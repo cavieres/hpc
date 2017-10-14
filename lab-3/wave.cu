@@ -68,14 +68,23 @@ __device__ void fillSpaceFirstStep(int N, float c, float dt, float dd, float *wa
 __device__ void initializeSpace(int N, float *waveSpace)
 {
 	int m = blockIdx.y * blockDim.y + threadIdx.y;
-	//int n = blockIdx.x * blockDim.x + threadIdx.x;
-	
-	for (int i = 0; i < blockDim.x; i++)
+	int n = blockIdx.x * blockDim.x + threadIdx.x;
+
+	//printf("m, n: %d, %d\n", m, n);
+
+	/*for (int i = 0; i < blockDim.x; i++)
+	{
 		waveSpace[m * blockDim.x + i] = 0;
+	}*/
+	waveSpace[m * N + n] = 0;
 	
-	for (int i = 0.4 * N; i < 0.6 * N; i++)
+	if ((m >= 0.4 * N) && (m < 0.6 * N) && (n >= 0.4 * N) && (n < 0.6 * N))
+		//printf("m, n: %d, %d\n", m, n);
+		waveSpace[m * N + n] = 20;
+
+	/*for (int i = 0.4 * N; i < 0.6 * N; i++)
 		for (int j = 0.4 * N; j < 0.6 * N; j++)
-			waveSpace[N * i + j] = 20;
+			waveSpace[N * i + j] = 20;*/
 }
 
 // Filling wave space with T > 1.
@@ -92,10 +101,12 @@ __global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *wav
 	float dt = 0.1;
 	float dd = 2.0;
 
+	//printf("blockIdx: %d\n", blockIdx.y);
+
 	// Schroedinger ecuation, by a given step as input.
 	for (int step = 0; step <= T; step++)
 	{
-	
+		//printf("step: %d\n", step);
 		switch(step)
 		{
 			case 0:
@@ -113,7 +124,7 @@ __global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *wav
 				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
 				break;
 		}
-	break;
+
 		// Save step image specified by parameter t.
 		if (step == t)
 			break;
@@ -163,12 +174,15 @@ __host__ int main(int argc, char **argv)
 		printf("Error: output iteration can't be bigger than step quantity.\n");
 		exit(1);
 	}
-	
+
 	numblocks.x = N/X;
 	numblocks.y = N/Y;
 
 	sizeblocks.x = X;
 	sizeblocks.y = Y;
+
+	//printf("numBlocks: (%d, %d)\n", numblocks.x, numblocks.y);
+	//printf("sizeBlocks: (%d, %d)\n", sizeblocks.x, sizeblocks.y);
 
 	// Setting wave spaces, saving states t, t - 1 and t - 2.
 	float *waveSpace;

@@ -72,8 +72,11 @@ __device__ void fillSpaceFirstStep(int N, float c, float dt, float dd, float *wa
 // sorrounding with zero values.
 __device__ void initializeSpace(int N, float *waveSpace)
 {
-	int m = blockIdx.y * blockDim.y + threadIdx.y;
-	int n = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+	
+	//if ((i == 0) || (j == 0) || (i >= N) || (j >= N))
+	//	return;
 
 	//printf("m, n: %d, %d\n", m, n);
 
@@ -81,10 +84,10 @@ __device__ void initializeSpace(int N, float *waveSpace)
 	{
 		waveSpace[m * blockDim.x + i] = 0;
 	}*/
-	waveSpace[m * N + n] = 0;
+	waveSpace[i * N + j] = 0;
 	
-	if ((m >= 0.4 * N) && (m < 0.6 * N) && (n >= 0.4 * N) && (n < 0.6 * N))
-		waveSpace[m * N + n] = 20;
+	if ((i >= 0.4 * N) && (i < 0.6 * N) && (j >= 0.4 * N) && (j < 0.6 * N))
+		waveSpace[i * N + j] = 20;
 
 	__syncthreads();
 
@@ -131,6 +134,7 @@ __global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *wav
 				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
 				break;
 			default:
+				__syncthreads();
 				fillSpaceTSteps(N, T, c, dt, dd, waveSpace, waveSpaceTMin1, waveSpaceTMin2);
 				memcpy(waveSpaceTMin2, waveSpaceTMin1, N * N * sizeof(float));
 				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
@@ -187,8 +191,13 @@ __host__ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	numblocks.x = N/X;
-	numblocks.y = N/Y;
+	numblocks.x = (int)ceil((float)N/X);
+	numblocks.y = (int)ceil((float)N/Y);
+
+	/*printf("N: %d\n", N);
+	printf("Y: %d\n", Y);
+	printf("numblocks.x: %d\n", numblocks.x);
+	printf("ceil: %d\n", (int)ceil((float)N/X));*/
 
 	sizeblocks.x = X;
 	sizeblocks.y = Y;

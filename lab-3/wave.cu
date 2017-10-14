@@ -58,9 +58,14 @@ int getWaveSpace(int N, char *f)
 // Filling wave space with T = 1.
 __device__ void fillSpaceFirstStep(int N, float c, float dt, float dd, float *waveSpace, float *waveSpaceTMin1)
 {
-	for (int i = 1; i < N; i++)
-		for (int j = 1; j < N - 1; j++)
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+	/*for (int i = 1; i < N; i++)
+		for (int j = 1; j < N - 1; j++)*/
 			waveSpace[N * i + j] = waveSpaceTMin1[N * i + j] + (c * c)/2 * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
+
+	__syncthreads();
 }
 
 // Setting wave space as a grid with values "20" in center
@@ -79,8 +84,9 @@ __device__ void initializeSpace(int N, float *waveSpace)
 	waveSpace[m * N + n] = 0;
 	
 	if ((m >= 0.4 * N) && (m < 0.6 * N) && (n >= 0.4 * N) && (n < 0.6 * N))
-		//printf("m, n: %d, %d\n", m, n);
 		waveSpace[m * N + n] = 20;
+
+	__syncthreads();
 
 	/*for (int i = 0.4 * N; i < 0.6 * N; i++)
 		for (int j = 0.4 * N; j < 0.6 * N; j++)
@@ -90,9 +96,15 @@ __device__ void initializeSpace(int N, float *waveSpace)
 // Filling wave space with T > 1.
 __device__ void fillSpaceTSteps(int N, int T, float c, float dt, float dd, float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2)
 {
-	for (int i = 1; i < N; i++)
-		for (int j = 1; j < N - 1; j++)
+
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+	/*for (int i = 1; i < N; i++)
+		for (int j = 1; j < N - 1; j++)*/
 			waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
+
+	__syncthreads();
 }
 
 __global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2, int T, int N, char *f, int t)

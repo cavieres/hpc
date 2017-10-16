@@ -82,15 +82,10 @@ __global__ void fillSpaceTSteps(int N, int T, float c, float dt, float dd, float
 
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
-//waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j];
-	waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
-	__syncthreads();
 
-	if (threadIdx.x == 0)
-	{
-		memcpy(waveSpaceTMin2, waveSpaceTMin1, N * N * sizeof(float));
-		memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
-	}
+	waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
+
+	__syncthreads();
 }
 
 __host__ int main(int argc, char **argv)
@@ -178,11 +173,13 @@ __host__ int main(int argc, char **argv)
 
 				break;
 			default:
-				
-
 				// Executing kernel from step 2.
 				fillSpaceTSteps<<<numblocks,sizeblocks>>>(N, T, c, dt, dd, waveSpace_d, waveSpaceTMin1_d, waveSpaceTMin2_d);
 				cudaDeviceSynchronize();
+
+				cudaMemcpy(waveSpaceTMin2_d, waveSpaceTMin1_d, N * N * sizeof(float), cudaMemcpyDeviceToDevice);
+				cudaMemcpy(waveSpaceTMin1_d, waveSpace_d, N * N * sizeof(float), cudaMemcpyDeviceToDevice);
+
 				break;
 		}
 	}

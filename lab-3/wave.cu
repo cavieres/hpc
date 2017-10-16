@@ -21,9 +21,9 @@ int setWaveSpace(int N, char *f, float *waveSpace)
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
 		
 		// Print wave space as CSV format.
-		//for (int j = 0; j < N; j++)
-		//	printf("%f;", waveSpace[N * i + j]);
-		//printf("\n");
+		for (int j = 0; j < N; j++)
+			printf("%f;", waveSpace[N * i + j]);
+		printf("\n");
 	}
 	
 	fclose(filestream);
@@ -77,27 +77,17 @@ void initializeSpace(int N, float *waveSpace)
 }
 
 // Filling wave space with T > 1.
-__device__ void fillSpaceTSteps(int N, int T, float c, float dt, float dd, float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2)
+__global__ void fillSpaceTSteps(int N, int T, float c, float dt, float dd, float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2)
 {
 
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
-
+//waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j];
 	waveSpace[N * i + j] = 2 * waveSpaceTMin1[N * i + j] - waveSpaceTMin2[N * i + j] + (c * c) * (dt/dd * dt/dd) * (waveSpaceTMin1[N * (i + 1) + j] + waveSpaceTMin1[N * (i - 1) + j] + waveSpaceTMin1[N * i + (j - 1)] + waveSpaceTMin1[N * i + (j + 1)] - 4 * waveSpaceTMin1[N * i + j]);
-
 	__syncthreads();
-}
 
-__global__ void schroedinger(float *waveSpace, float *waveSpaceTMin1, float *waveSpaceTMin2, int T, int N, char *f, int t)
-{
-	float c = 1.0;
-	float dt = 0.1;
-	float dd = 2.0;
-
-	// Schroedinger ecuation, by a given step as input, from 2.
-	for (int step = 2; step <= T; step++)
+	if (threadIdx.x == 0)
 	{
-		fillSpaceTSteps(N, T, c, dt, dd, waveSpace, waveSpaceTMin1, waveSpaceTMin2);
 		memcpy(waveSpaceTMin2, waveSpaceTMin1, N * N * sizeof(float));
 		memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
 	}
@@ -180,28 +170,25 @@ __host__ int main(int argc, char **argv)
 				fillSpaceFirstStep(N, c, dt, dd, waveSpace, waveSpaceTMin1);
 				memcpy(waveSpaceTMin2, waveSpaceTMin1, N * N * sizeof(float));
 				memcpy(waveSpaceTMin1, waveSpace, N * N * sizeof(float));
+
+				// Copying values from CPU to GPU.
+				cudaMemcpy(waveSpace_d, waveSpace, N * N * sizeof(float), cudaMemcpyHostToDevice);
+				cudaMemcpy(waveSpaceTMin1_d, waveSpaceTMin1, N * N * sizeof(float), cudaMemcpyHostToDevice);
+				cudaMemcpy(waveSpaceTMin2_d, waveSpaceTMin2, N * N * sizeof(float), cudaMemcpyHostToDevice);
+
 				break;
 			default:
+				
+
+				// Executing kernel from step 2.
+				fillSpaceTSteps<<<numblocks,sizeblocks>>>(N, T, c, dt, dd, waveSpace_d, waveSpaceTMin1_d, waveSpaceTMin2_d);
+				cudaDeviceSynchronize();
 				break;
 		}
-		
-		if (step == 2)
-			break;
 	}
 
-	if (T >= 2)
-	{
-		// Copying values from CPU to GPU.
-		cudaMemcpy(waveSpace_d, waveSpace, N * N * sizeof(float), cudaMemcpyHostToDevice);
-		cudaMemcpy(waveSpaceTMin1_d, waveSpaceTMin1, N * N * sizeof(float), cudaMemcpyHostToDevice);
-		cudaMemcpy(waveSpaceTMin2_d, waveSpaceTMin2, N * N * sizeof(float), cudaMemcpyHostToDevice);
-	
-		// Executing kernel from step 2.
-		schroedinger<<<numblocks,sizeblocks>>>(waveSpace_d, waveSpaceTMin1_d, waveSpaceTMin2_d, T, N, f, t);
-		cudaDeviceSynchronize();
-		
+	if (T > 1)
 		cudaMemcpy(waveSpace, waveSpace_d, N * N * sizeof(float), cudaMemcpyDeviceToHost);
-	}
 
 	setWaveSpace(N, f, waveSpace);
 

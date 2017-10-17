@@ -27,7 +27,7 @@
 \maketitle
 El trabajo comienza con la creación de un algoritmo secuencial que simula el comportamiento de una onda bajo la ley de Schroedinger.
 
-Luego se identifican las piezas de código que pueden ser paralelizables para utilizar en éstas estrategias basadas en el paradigma SIMT-CUDA.
+Luego se identifican las piezas de código que pueden ser paralelizables para utilizar en estas estrategias basadas en el paradigma SIMT-CUDA.
 
 Finalmente se realizan pruebas de rendimiento de la aplicación utilizando las métricas:
 
@@ -51,7 +51,7 @@ El algoritmo se estructuró de tal forma que represente el planteamiento del mat
 \subsection{Paralelización}
 La estrategia de paralelización se basó en descubrir los bloques de códigos críticos potenciales para la utilización de CUDA.
 
-Estos trozos de código fueron las ecuaciones de Schroedinger para el intervalo de tiempo $t >= 1$:
+Estos trozos de código son aquellos que construyen la ecuación de Schroedinger para el intervalo de tiempo $t >= 1$ (método \texttt{fillSpaceTSteps}):
 
 \lstset{language=C, breaklines=true, frame=single}
 
@@ -66,7 +66,16 @@ La estrategia adoptada fue la de utilizar las posiciones absolutas de las hebras
 
 De esta manera, se obtienen los indices \texttt{i, j} a partir del identificador de bloque, tamaño de éste y la identificación de hebra actual.
 
-Como se aprecia en código de instrucción \texttt{parallel for}, debido al empleo de 4 celdas que realiza la ecuación de Schroedinger, es que se decidió utilizar una paralelización estática asignando a cada hilo una cantidad fija de 4 iteraciones del bucle. 
+Las matrices necesarias para operar la ecuación son entregadas por parámetro a la función, utilizando memoria compartida. Cada vez que termina de ejecutarse el método, se reasignan los valores de las matrices a sus nuevos estados \texttt{T}:
+
+\lstset{language=C, breaklines=true, frame=single}
+
+\begin{lstlisting}
+cudaMemcpy(waveSpaceTMin2_d, waveSpaceTMin1_d, N * N * sizeof(float), cudaMemcpyDeviceToDevice);
+cudaMemcpy(waveSpaceTMin1_d, waveSpace_d, N * N * sizeof(float), cudaMemcpyDeviceToDevice);
+\end{lstlisting}
+
+Cada copia de esta información se concentra en dispositivo.
 
 \section{Rendimiento Computacional}
 
@@ -75,17 +84,23 @@ El análisis de rendimiento se realizó bajo los siguientes parámetros y tamañ
 \begin{itemize}
 	\item grillas = \{512, 1024, 2048, 4096\}
 	\item bloques = \{10x10, 16x16, 32x16, 32x32\}
+	\item tiempo = \{300, 1000, 10000\}
 \end{itemize}
 
 //TODO: Hablar de bloque 10x10 para comparaciones entre dos procesadores.
 
-Además, por problemas de capacidad de almacenamiento de equipos computacionales, debió evitarse la generación de las imágenes para cada caso.
+En un principio se ejecutaron las pruebas con el algoritmo generando imagen en formato RAW, pero por problemas de capacidad de almacenamiento de equipos computacionales y lentitud de ejecución, debió modificarse el algortimo para evitar la generación de las imágenes para cada caso.
+
+A pesar de lo anterior se lograron ejecutar pruebas con algoritmo original (generando imagen) hasta la iteración \texttt{N = 4096, T = 300}, cuyas pruebas son expuestas en apartado.
 
 \subsection{Tiempo (Mismo Tamaño de Bloque)}
 
 Para los siguientes cálculos se utilizaron como tamaño de bloque \texttt{X = 10, Y = 10}:
-- con generación de la imagen de salida
-- sin generación de la imagen de salida.
+
+\begin{itemize}
+	\item Con generación de la imagen de salida
+	\item Sin generación de la imagen de salida.
+\end{itemize}
 
 \subsubsection{Sin Generación Imagen Salida}
 El tiempo tomado para realizar la ejecución se representa en la siguiente figura:
@@ -101,7 +116,6 @@ El tiempo tomado para realizar la ejecución se representa en la siguiente figur
 En los tres casos el tiempo aumenta aceleradamente en una proporción similar como se evidencia en curvas. 
 
 Sin embargo, se destaca que al aumentar el número de pasos \texttt{T}, el rendimiento del procesamiento siga siendo similar, demostrando la capacidad de la unidad GPU de procesar tareas de cómputo repetitivas. 
-
 
 Se obtienen los siguientes mínimos: 
 
@@ -158,13 +172,13 @@ Los tiempos mínimos no experimentan mayores cambios, en comparación con los m�
 	\begin{tabular}{@{}lll@{}}
 		\toprule
 		\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{N (grilla.)} & \multicolumn{1}{c}{T (seg.)} \\ \midrule
-		300                          & 512                          & 0.244316                     \\
-		1000                         & 512                          & 0.284443                     \\
-		10000                        & 512                          & 0.296664                     \\ \bottomrule
+		300                          & 4096                         & 25 (min)                     \\
+		1000                         & 2048                         & 3,4 (min)                    \\
+		10000                        & 2048                         & 3,4 (min)                    \\ \bottomrule
 	\end{tabular}
 \end{table}
 
-Dichos tiempos fueron excesivamente altos, evidenciando el costo computacional que implica el acceso a memoria secundaria, por ser aquella más lenta dentro de todos los tipos de memoria del sistema.
+Dichos tiempos fueron excesivamente altos comparándolos a su ejecución sin almacenamiento de imagen, evidenciando el costo computacional que implica el acceso a memoria secundaria, por ser aquella más lenta dentro de todos los tipos de memoria del sistema.
 
 \FloatBarrier
 
@@ -183,6 +197,7 @@ Para este caso se utilizaron los parámetros:
 \begin{itemize}
 	\item grilla = \{2048x2048\}
 	\item bloques = \{16x16, 32x16, 32x32\}
+	\item tiempo = \{300, 1000, 10000\}
 \end{itemize}
 
 Curva generada fue la siguiente:

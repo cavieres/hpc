@@ -1,0 +1,7 @@
+nvcc --ptxas-options=-v -o wave wave.cu -Xcompiler -fopenmp
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z15fillSpaceTStepsiifffPfS_S_' for 'sm_20'
+ptxas info    : Function properties for _Z15fillSpaceTStepsiifffPfS_S_
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, 80 bytes cmem[0], 8 bytes cmem[16]

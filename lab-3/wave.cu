@@ -19,11 +19,6 @@ int setWaveSpace(int N, char *f, float *waveSpace)
 	for (int i = 0; i < N; i++)
 	{
 		fwrite(&waveSpace[i], sizeof(float), N * N, filestream);
-		
-		// Print wave space as CSV format.
-		//for (int j = 0; j < N; j++)
-		//	printf("%f;", waveSpace[N * i + j]);
-		//printf("\n");
 	}
 	
 	fclose(filestream);
@@ -187,12 +182,11 @@ __host__ int main(int argc, char **argv)
 	if (T > 1)
 		cudaMemcpy(waveSpace, waveSpace_d, N * N * sizeof(float), cudaMemcpyDeviceToHost);
 
-	//setWaveSpace(N, f, waveSpace);
+	setWaveSpace(N, f, waveSpace);
 
 	double end = omp_get_wtime();
 
-	//printf("Time spent: %f\n", end - start);
-	printf("%d;%d;%d;%d;%f\n", N, X, Y, T, end - start);
+	printf("Time spent: %f\n", end - start);
 	
 	return 0;
 }

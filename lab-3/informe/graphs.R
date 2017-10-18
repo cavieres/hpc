@@ -21,8 +21,8 @@ ggplot(subset(df, T %in% c("3C", "1K", "10K")),
 
 # Tiempo (diferente tamaño de bloque, SIN grabado imagen)
 df = read.csv("lab3-benchmark-without-raw-diff-blocks.csv", header = TRUE, sep = ";")
-ggplot(subset(df, T %in% c("3C", "1K", "10K")),
-       aes(x=XxY,
+ggplot(subset(df, XxY %in% c("16x16", "32x16", "32x32")),
+       aes(x=T,
            y=Time,
-           color=T))+
-  geom_line(aes(color = T), size = 1) + facet_wrap(~T, ncol = 3) + labs(x = "Bloques (X, Y)", y = "Tiempo")
+           color=XxY))+
+  geom_line(aes(color = XxY), size = 1) + facet_wrap(~XxY, ncol = 3) + labs(x = "Pasos (T)", y = "Tiempo")

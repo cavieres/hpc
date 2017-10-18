@@ -19,6 +19,8 @@
 
 \leftheader{DIINF-USACH}
 
+\shorttitle{HPC - LAB3}
+
 \abstract{Se presenta un resumen del desarrollo del laboratorio 3 de la asignatura High Performance Computing dictado por el profesor Dr. Fernando Rannou, exponiendo resultados de las pruebas de rendimiento computacional sobre la aplicación paralelizada.}
 
 \keywords{HPC, CUDA, NVIDIA, Parallel, Schroedinger}
@@ -82,12 +84,10 @@ Cada copia de esta información se concentra en dispositivo.
 El análisis de rendimiento se realizó bajo los siguientes parámetros y tamaños:
 
 \begin{itemize}
-	\item grillas = \{512, 1024, 2048, 4096\}
-	\item bloques = \{10x10, 16x16, 32x16, 32x32\}
-	\item tiempo = \{300, 1000, 10000\}
+	\item Grillas = \{512, 1024, 2048, 4096\}
+	\item Bloques = \{10x10, 16x16, 32x16, 32x32\}
+	\item Tiempo = \{300, 1000, 10000\}
 \end{itemize}
-
-//TODO: Hablar de bloque 10x10 para comparaciones entre dos procesadores.
 
 En un principio se ejecutaron las pruebas con el algoritmo generando imagen en formato RAW, pero por problemas de capacidad de almacenamiento de equipos computacionales y lentitud de ejecución, debió modificarse el algortimo para evitar la generación de las imágenes para cada caso.
 
@@ -104,8 +104,6 @@ Para los siguientes cálculos se utilizaron como tamaño de bloque \texttt{X = 1
 
 \subsubsection{Sin Generación Imagen Salida}
 El tiempo tomado para realizar la ejecución se representa en la siguiente figura:
-
-\clearpage
 
 \begin{figure}[h]
 	\includegraphics[width=\columnwidth]{time-same-block-size-no-raw.png}
@@ -136,6 +134,8 @@ Se obtienen los siguientes mínimos:
 
 Como se ha dicho, estos mínimos se incrementan aceleradamente a medida que aumentan las iteraciones.
 
+\FloatBarrier
+
 \subsubsection{Con Generación Imagen Salida}
 Ejecutando algoritmo con generación de imagen, se consigue siguiente rendimiento:
 
@@ -162,9 +162,10 @@ El comportamiento de la curva en comparación al anterior es equivalente, regist
 \end{tabular}
 \end{table}
 
+\clearpage
+
 Los tiempos mínimos no experimentan mayores cambios, en comparación con los máximos:
 
-// TODO: completar con info.
 \begin{table}[h]
 	\centering
 	\caption{Máximos de tiempo por iteraciones.}
@@ -189,51 +190,63 @@ La métrica utilizada para calcular el \textit{Device Occupancy} se expresa de l
 	Ocupancia = \frac{Numero\, de\, warps\, activos}{Maximo\, Numero\, de\, warps}
 \]
 
-// TODO: calcularlo.
+Para dicha labor se utilizó la herramienta \textit{CUDA Occupancy calculator}, que permite realizar el calcular la ocupancia de un kernel particular a partir de las siguientes entradas:
+
+\begin{itemize}
+	\item Compute capability = 5,2 (A partir de información recogida para GPU NVIDIA Quadro M2000)
+	\item Shared memory size Config (bytes) = 98304
+	\item Global load caching mode = L2 only (cg)
+	\item Threads per block = 1024 (considerando el tamaño máximo de bloques utilizado)
+	\item Registers per thread = 18 (a partir de comando \texttt{nvcc --ptxas-options=-v})
+	\item Shared memory per block (bytes) = 88
+\end{itemize}
+
+
+
+Consiguendo la siguiente información:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[h]
+	\centering
+	\caption{Ocupancia GPU}
+	\label{my-label}
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		Active Threads per Multiprocessor         & 2048           \\ \midrule
+		Active Warps per Multiprocessor           & 64             \\
+		Active Thread Blocks per Multiprocessor   & 2              \\
+		\textbf{Occupancy of each Multiprocessor} & \textbf{100\%} \\ \bottomrule
+	\end{tabular}
+\end{table}
+
+Se alcanza máxima ocupancia con la solución construída.
 
 \subsection{Tiempo (Diferentes Tamaños de Bloques, Sin Imagen Salida)}
 Para este caso se utilizaron los parámetros:
 
 \begin{itemize}
-	\item grilla = \{2048x2048\}
-	\item bloques = \{16x16, 32x16, 32x32\}
-	\item tiempo = \{300, 1000, 10000\}
+	\item Grilla = \{2048x2048\}
+	\item Bloques = \{16x16, 32x16, 32x32\}
+	\item Tiempo = \{300, 1000, 10000\}
 \end{itemize}
 
 Curva generada fue la siguiente:
 
-// TODO: hacer curva
 \begin{figure}[h]
 	\includegraphics[width=\columnwidth]{time-diff-block-size-no-raw.png}
-	\caption{Eficiencia para T = \{2000, 4000, 8000\}}
+	\caption{Tiempo ejecución para T = \{300, 1000, 10000\}}
 	\label{fig:Figure3}
 \end{figure}
 
-// TODO: Describir y tabla.
-Hay un decremento sostenido del indicador hasta la ejecución con 3 hebras, desde donde curva se estabiliza.
-
-El punto de inflexión dado con \textit{H = 3} para cada iteración tiene el siguiente valor:
-
-\begin{table}[]
-\centering
-\caption{Punto inflexión eficiencia por iteraciones}
-\label{my-label}
-\begin{tabular}{@{}lll@{}}
-\toprule
-\multicolumn{1}{c}{T (its.)} & \multicolumn{1}{c}{H (num.)} & \multicolumn{1}{c}{E(H)} \\ \midrule
-2000                         & 3                            & 0,3718947                \\
-4000                         & 3                            & 0,3491872                \\
-8000                         & 3                            & 0,352224                 \\ \bottomrule
-\end{tabular}
-\end{table}
+Cambiando el tamaño de los bloques se aprecia un comportamiento lineal similar al aumentar el valor \texttt{T}.
 
 \section{Conclusiones}
-// TODO: hacerlas
 
-A partir de la comparación de los resultados para cada variación de parámetro del algoritmo, se observa que las curvas de tiempo, \textit{speedup} y eficiencia se presentan similares, evidenciando que la estrategia de paralelización aplicada fue estática. 
+El trabajo mostró el desempeño la implementación de la ecuación de Schroedinger, bajo el paradigma CUDA-SIMT.
 
-Esta característica de paralelización garantizó que el trabajo con hilos se realizara uniformemente dentro del bucle de construcción de grilla con imagen.
+Los gráficos generados muestran un comportamiento uniforme del desempeño para cada caso comparado, siendo en términos generales consistente la ejecución del algoritmo ante el aumento de carga y utilización de tamaños de bloques distintos.
 
-Un inconveniente en el análisis de rendimiento fue que se contó con un computador de 8 núcleos, cuya característica no permitió extender el análisis con una mayor cantidad de cómputo que permitiera ver el comportamiento de la aplicación en un periodo de tiempo más extenso.
+Un problema experimentado en el análisis fue la ejecución de las pruebas con algoritmo generado imagen extensión RAW, que ante una iteración con valores altos, consumió tiempo y espacio en disco duro excesivo, obligando a quitar esta opción para continuar con análisis, descubriendo un considerable incremento en el rendimiento de la aplicación.
 
 \end{document}

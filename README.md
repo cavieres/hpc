@@ -1,5 +1,5 @@
 # HPC
-High Performance Computing, laboratorios del semestre.
+High Performance Computing, semester's laboratories.
 
 
 ## Lab-1 (SIMD-SSE)

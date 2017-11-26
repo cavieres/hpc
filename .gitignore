@@ -2,6 +2,7 @@ wave
 simdsort
 stack-array
 exec-its-bchmks
+gol
 *.exe
 *.raw
 *.zip

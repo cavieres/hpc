@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include<stdio.h>
+#include <getopt.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -8,36 +9,61 @@
 
 int main(int argc, char *argv[]){
 
-  //Clock
-  double start_time = omp_get_wtime();
-  
-  int PROCESSORS = atoi(argv[2]);
-  int NROWS = atoi(argv[5]);
-  int NCOLS = atoi(argv[7]);
-  int ITERATIONS = atoi(argv[9]);
-  int PARTITIONING_METHOD = atoi(argv[11]);
-  int NTHREADS = atoi(argv[13]);
-  int SEED = atoi(argv[15]);
-  
-  int **Matrix = (int **)malloc(NROWS*sizeof(int*));
-  for(int i=0;i<NROWS;i++){
-	  Matrix[i] = (int*) malloc(NCOLS*sizeof(int));
-  }
-  
-  //Num HIlos
-  omp_set_num_threads(Hilos);
-  
-  if(PARTITIONING_METHOD == 0){
-	  //strip decomposition
-	  
-  }else if(PARTITIONING_METHOD == 1){
-	  //block decomposition
-	  
-  }
-  
-  
-  double time = omp_get_wtime() - start_time;
-  printf("\nClock: %lf ", time); 
+	//Clock
+	double start_time = omp_get_wtime();
+	
+	int NROWS;
+	int NCOLS;
+	int ITERATIONS;
+	int PARTITIONING_METHOD;
+	int NTHREADS;
+	int SEED;
+	
+	int selection;
+	
+	while ((selection = getopt(argc, argv, "r:c:i:m:t:s:")) != -1)
+	{
+		switch(selection) {
+			case 'r':
+				NROWS = atoi(optarg);
+				break;
+			case 'c':
+				NCOLS = atoi(optarg);
+				break;
+			case 'i':
+				ITERATIONS = atoi(optarg);
+				break;
+			case 'm':
+				PARTITIONING_METHOD = atoi(optarg);
+				break;
+			case 't':
+				NTHREADS = atoi(optarg);
+				break;
+			case 's':
+				SEED = atoi(optarg);
+				break;
+		}
+	}
+
+	int **Matrix = (int **)malloc(NROWS*sizeof(int*));
+	for(int i=0;i<NROWS;i++){
+		Matrix[i] = (int*) malloc(NCOLS*sizeof(int));
+	}
+	
+	//Num HIlos
+	omp_set_num_threads(NTHREADS);
+	
+	if(PARTITIONING_METHOD == 0){
+		//strip decomposition
+		
+	}else if(PARTITIONING_METHOD == 1){
+		//block decomposition
+		
+	}
+	
+	
+	double time = omp_get_wtime() - start_time;
+	printf("\nClock: %lf\n", time); 
 }
 
 void stripDecomposition(int **Matrix, int PROCESSORS,int NROWS, int NCOLS){

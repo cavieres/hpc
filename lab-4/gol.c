@@ -53,15 +53,13 @@ int main(int argc, char *argv[]){
 	
 	int rank;
 	MPI_Status status;
-	//int **Matrix = (int **)malloc(NROWS*sizeof(int*));
-	//for(int i=0;i<NROWS;i++){
-	//	Matrix[i] = (int*) malloc(NCOLS*sizeof(int));
-	//}
+
 	int *Matrix = (int *)malloc(sizeof(int)*NROWS*NCOLS);
 
 	MPI_Datatype coltypeMiddle;
 	MPI_Datatype coltypeRight;
 	MPI_Datatype coltypeReturn;
+	
 	MPI_Init(NULL, NULL);
 	
 	int nprocs;
@@ -82,7 +80,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	//MPI_Type_vector(NROWS,NCOLS_METHOD,NCOLS,MPI_INT,&coltype);
+	
 	MPI_Type_vector(NROWS, 4, NCOLS, MPI_INT, &coltypeMiddle);
 	MPI_Type_commit(&coltypeMiddle);
 	MPI_Type_vector(NROWS, NCOLS + 1, NROWS, MPI_INT, &coltypeRight);
@@ -116,28 +114,16 @@ int main(int argc, char *argv[]){
 			printf("ini: %d fin: %d\n", iniCol, finCol);
 			setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol,NCOLS);
 			
-			//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR
-			/*int m=0;
-			for(int i=0;i<NROWS;i++){
-				for(int j=0;j<NCOLS;j++){
-					Matrix[i*NCOLS + j] = m;
-					m++;
-				}
-			}*/
-			//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR
-			
 			iniCol = iniCol + NCOLS_METHOD;
-			//iniCol = NCOLS_METHOD;
 		}
 		//TODO: ENviar partes de matriz
 		
 		printValues(Matrix, NROWS, NCOLS);
 		
 		
-		for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
+		for(int rankEnvio = 1; rankEnvio < nprocs; rankEnvio++){
 			
 			if (rankEnvio == nprocs - 1){
-				
 				MPI_Send(&Matrix[0],1,coltypeRight,rankEnvio,rankEnvio,MPI_COMM_WORLD);
 			} else {
 				
@@ -151,54 +137,39 @@ int main(int argc, char *argv[]){
 		
 		//TODO: Barrera y unificar resultados 
 		
+		int iniCol2 = 2; // Discounting master's work.
 		
 		for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
-			
-			if (rankEnvio == nprocs - 1){
-				MPI_Recv(&Matrix[6], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
-			}else{
-				MPI_Recv(&Matrix[2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
-			}
+
+			MPI_Recv(&Matrix[iniCol2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
+			//printf("iniCol2: %d\n", iniCol2);
+			iniCol2 += NCOLS_METHOD;
 		}
 		
 		printValues(Matrix, NROWS, NCOLS);
-	}else if (rank == nprocs - 1){
+	}
+	else {
+	
+		if (rank == nprocs - 1)
+			MPI_Recv(&Matrix[0], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
+		else
+			MPI_Recv(&Matrix[0], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
 		
-
-		MPI_Recv(&Matrix[0], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
-		/*
-		else {
-			MPI_Type_commit(&coltypeMiddle);
-			MPI_Recv(Matrix[0][rank * 2 - 1], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
-		}
-		
-		printf("rec rank %d", rank);
-		printValues(Matrix, NROWS, NCOLS);*/
+		//printf("rank: %d\n", rank);
 		for(int i=0;i<NROWS;i++){
-			Matrix[i*NCOLS+4] = 444;
-			Matrix[i*NCOLS+5] = 777;
-			Matrix[i*NCOLS+6] = 888;
-			Matrix[i*NCOLS+7] = 111;
+			Matrix[i*NCOLS+0] = rank;
+			Matrix[i*NCOLS+1] = rank;
+			Matrix[i*NCOLS+2] = rank;
+			Matrix[i*NCOLS+3] = rank;
+			Matrix[i*NCOLS+4] = rank;
+			Matrix[i*NCOLS+5] = rank;
+			Matrix[i*NCOLS+6] = rank;
+			Matrix[i*NCOLS+7] = rank;
 			
 		}
 		//printValues(Matrix, NROWS, NCOLS);
 		
-		MPI_Send(&Matrix[6], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
-	}else if (rank != nprocs - 1){
-		
-		MPI_Recv(&Matrix[0], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
-		
-		for(int i=0;i<NROWS;i++){
-			Matrix[i*NCOLS+2] = 222;
-			Matrix[i*NCOLS+3] = 333;
-			Matrix[i*NCOLS+4] = 444;
-			Matrix[i*NCOLS+5] = 555;
-			
-		}
-		
-		MPI_Send(&Matrix[2], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
-		
-		
+				MPI_Send(&Matrix[rank * NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
 	}
 	
 	MPI_Finalize();

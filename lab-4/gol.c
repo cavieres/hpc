@@ -16,16 +16,8 @@ int main(int argc, char *argv[]){
 
 	//Clock
 	double start_time = omp_get_wtime();
-		
-	MPI_Init(NULL, NULL);
-	
-	int nprocs;
-	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-	
-	int myrank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-
+	
 	int NROWS;
 	int NCOLS;
 	int ITERATIONS;
@@ -59,16 +51,20 @@ int main(int argc, char *argv[]){
 		}
 	}
 	
-	//Num HIlos
-	omp_set_num_threads(NTHREADS);
-
+	int rank;
+	MPI_Status status;
 	int **Matrix = (int **)malloc(NROWS*sizeof(int*));
 	for(int i=0;i<NROWS;i++){
 		Matrix[i] = (int*) malloc(NCOLS*sizeof(int));
 	}
-	
-	initialize(Matrix, NROWS, NCOLS);
 
+	MPI_Datatype coltypeMiddle;
+	MPI_Datatype coltypeRight;
+	MPI_Datatype coltypeReturn;
+	MPI_Init(NULL, NULL);
+	
+	int nprocs;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	
 	int NROWS_METHOD = NROWS;
 	int NCOLS_METHOD = NCOLS;
@@ -84,11 +80,32 @@ int main(int argc, char *argv[]){
 		
 	}
 	
-	//////////////////////////////////////
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	//MPI_Type_vector(NROWS,NCOLS_METHOD,NCOLS,MPI_INT,&coltype);
+	MPI_Type_vector(NROWS, NCOLS + 2, NROWS, MPI_INT, &coltypeMiddle);
+	MPI_Type_commit(&coltypeMiddle);
+	MPI_Type_vector(NROWS, NCOLS + 1, NROWS, MPI_INT, &coltypeRight);
+	MPI_Type_commit(&coltypeRight);
+	MPI_Type_vector(NROWS+3, NCOLS, NROWS, MPI_INT, &coltypeReturn);
+	MPI_Type_commit(&coltypeReturn);
 	
+	
+	
+	
+	//Num HIlos
+	omp_set_num_threads(NTHREADS);
+	
+	
+	
+	initialize(Matrix, NROWS, NCOLS);
 
 	
-	if(myrank == 0){
+	
+	
+	//////////////////////////////////////
+
+	
+	if(rank == 0){
 		
 		int iniCol = 0;
 		
@@ -97,12 +114,68 @@ int main(int argc, char *argv[]){
 			int finCol = NCOLS_METHOD +  finCol;
 			printf("ini: %d fin: %d\n", iniCol, finCol);
 			setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol);
-			printValues(Matrix, NROWS, NCOLS);
 			
 			iniCol = iniCol + NCOLS_METHOD;
 			//iniCol = NCOLS_METHOD;
 		}
+		//TODO: ENviar partes de matriz
 		
+		printValues(Matrix, NROWS, NCOLS);
+		
+		
+		for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
+			
+			if (rankEnvio == nprocs - 1)
+			{
+				
+				MPI_Send(&Matrix[0][(rankEnvio * 2) - 1],1,coltypeRight,rankEnvio,rankEnvio,MPI_COMM_WORLD);
+			}/*
+			else {
+				
+				MPI_Send(Matrix[0][(rankEnvio * 2) - 1],1,coltypeMiddle,rankEnvio,rankEnvio,MPI_COMM_WORLD);
+			}
+			*/
+		}
+		
+		
+		////////////////////////PROCESO
+		
+		//TODO: Barrera y unificar resultados 
+		
+		
+		for(int rankEnvio=3; rankEnvio < nprocs; rankEnvio++){
+			
+			MPI_Recv(&Matrix[0][rankEnvio * 2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
+		}
+		
+		printValues(Matrix, NROWS, NCOLS);
+	}else if (rank == nprocs - 1){
+		
+		for(int i=0;i<NROWS;++i){
+			for(int j=0;j<NCOLS;++j){ 
+				Matrix[i][j]=9;
+			}
+		}
+		
+		if (rank == nprocs - 1)
+		{
+			
+			MPI_Recv(&Matrix[0][rank * 2 - 1], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
+		}/*
+		else {
+			MPI_Type_commit(&coltypeMiddle);
+			MPI_Recv(Matrix[0][rank * 2 - 1], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
+		}
+		
+		printf("rec rank %d", rank);
+		printValues(Matrix, NROWS, NCOLS);*/
+		for(int i=0;i<NROWS;i++){
+			Matrix[i][6] = 777;
+			
+		}
+		//printValues(Matrix, NROWS, NCOLS);
+		
+		MPI_Send(&Matrix[0][(rank * 2)], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
 	}
 	
 	MPI_Finalize();
@@ -128,8 +201,8 @@ void setSeeds(int SEED, int **Matrix, int NROWS_METHOD, int NCOLS_METHOD, int in
 	int numUnos = 0;
 	int abort = 0;
 	//TODO: mas unos de los requeridos (seed)
-	#pragma omp parallel shared(numUnos) 
-	#pragma omp for schedule(static, 1) 
+	//#pragma omp parallel shared(numUnos) 
+	//#pragma omp for schedule(static, 1) 
 	for(int i=0;i<NROWS_METHOD;i++){
 		if (abort == 0) {
 			for(int j=iniCol;j<finCol;j++){

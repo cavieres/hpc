@@ -58,8 +58,7 @@ int main(int argc, char *argv[]){
 
 	int *Matrix = (int *)malloc(sizeof(int)*NROWS*NCOLS);
 
-	MPI_Datatype coltypeMiddle;
-	MPI_Datatype coltypeRight;
+	MPI_Datatype coltypeAll;
 	MPI_Datatype coltypeReturn;
 	
 	MPI_Init(NULL, NULL);
@@ -89,12 +88,10 @@ int main(int argc, char *argv[]){
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
 	// Setting size of each strip column to send to each core.
-	MPI_Type_vector(NROWS, NCOLS_METHOD + GHOST_COLS_MIDDLE, NCOLS, MPI_INT, &coltypeMiddle);
-	MPI_Type_vector(NROWS, NCOLS_METHOD + GHOST_COLS_RIGHT, NROWS, MPI_INT, &coltypeRight);
+	MPI_Type_vector(NROWS, NCOLS, NROWS, MPI_INT, &coltypeAll);
 	MPI_Type_vector(NROWS, NCOLS_METHOD, NCOLS, MPI_INT, &coltypeReturn);
-	
-	MPI_Type_commit(&coltypeMiddle);
-	MPI_Type_commit(&coltypeRight);
+
+	MPI_Type_commit(&coltypeAll);
 	MPI_Type_commit(&coltypeReturn);
 	
 	
@@ -133,10 +130,10 @@ int main(int argc, char *argv[]){
 		for(int rankEnvio = 1; rankEnvio < nprocs; rankEnvio++){
 			
 			if (rankEnvio == nprocs - 1){
-				MPI_Send(&Matrix[0],1,coltypeRight,rankEnvio,rankEnvio,MPI_COMM_WORLD);
+				MPI_Send(&Matrix[0],1,coltypeAll,rankEnvio,rankEnvio,MPI_COMM_WORLD);
 			} else {
 				
-				MPI_Send(&Matrix[0],1,coltypeMiddle,rankEnvio,rankEnvio,MPI_COMM_WORLD);
+				MPI_Send(&Matrix[0],1,coltypeAll,rankEnvio,rankEnvio,MPI_COMM_WORLD);
 			}
 			
 		}
@@ -149,13 +146,16 @@ int main(int argc, char *argv[]){
 		
 		//TODO: Barrera y unificar resultados 
 		
-		int iniCol2 = 2; // Discounting master's work.
+		int iniCol2 = NCOLS_METHOD; // Discounting master's work.
 		
 		for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
 
 			MPI_Recv(&Matrix[iniCol2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
 			//printf("iniCol2: %d\n", iniCol2);
 			iniCol2 += NCOLS_METHOD;
+			
+			printf("rank = %d; Result:\n", rankEnvio);
+			printValues(Matrix, NROWS, NCOLS);
 		}
 		
 		// Work in first strip associated to pid = 0.
@@ -169,15 +169,14 @@ int main(int argc, char *argv[]){
 		}*/
 		
 		
-		printf("Result:\n");
-		printValues(Matrix, NROWS, NCOLS);
+
 	}
 	else {
 	
 		if (rank == nprocs - 1)
-			MPI_Recv(&Matrix[0], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
+			MPI_Recv(&Matrix[0], 1, coltypeAll, 0, rank, MPI_COMM_WORLD, &status);
 		else
-			MPI_Recv(&Matrix[0], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
+			MPI_Recv(&Matrix[0], 1, coltypeAll, 0, rank, MPI_COMM_WORLD, &status);
 		
 		//initialize(Matrix, NROWS, NCOLS);
 		
@@ -193,10 +192,15 @@ int main(int argc, char *argv[]){
 			Matrix[i*NCOLS+7] = rank;
 			
 		}*/
-		//printValues(Matrix, NROWS, NCOLS);
-		//setLifeAndDead(Matrix, NROWS, NCOLS, rank * NCOLS_METHOD, rank * NCOLS_METHOD + 2);
+		int inicio = NCOLS_METHOD * rank;
+			
+		int fin = inicio + NCOLS_METHOD;
+			
+				printf("rank = %d;Rango a Modificar = (%d, %d); Result:\n", rank, inicio, fin);
+		printValues(Matrix, NROWS, NCOLS);
+		setLifeAndDead(Matrix, NROWS, NCOLS, inicio, fin);
 		
-				MPI_Send(&Matrix[rank * NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
+				MPI_Send(&Matrix[rank*NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
 	}
 	
 	MPI_Finalize();

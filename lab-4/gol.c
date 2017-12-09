@@ -116,17 +116,14 @@ int main(int argc, char *argv[]){
 		iniCol = iniCol + NCOLS_METHOD;
 	}
 	
+	printf("Sended:\n");
+	printValues(Matrix, NROWS, NCOLS);
+	
 	
 	//////////////////////////////////////
 	for(int it=0;it<ITERATIONS;it++){
 		
 		if(rank == 0){
-
-
-			//TODO: ENviar partes de matriz
-			printf("Sended:\n");
-			printValues(Matrix, NROWS, NCOLS);
-
 
 			for(int rankEnvio = 1; rankEnvio < nprocs; rankEnvio++){
 
@@ -155,9 +152,6 @@ int main(int argc, char *argv[]){
 				//printf("rank = %d; Result:\n", rankEnvio);
 				//printValues(Matrix, NROWS, NCOLS);
 			}
-
-			printf("Result:\n");
-			printValues(Matrix, NROWS, NCOLS);
 
 		} else {
 
@@ -194,7 +188,8 @@ int main(int argc, char *argv[]){
 		}
 	}
 	
-
+	printf("Result:\n");
+	printValues(Matrix, NROWS, NCOLS);
 	
 	MPI_Finalize();
 	
@@ -279,10 +274,10 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
 
     for(int fila=0;fila<NROWS;fila++){
 		for(int columna=iniCol;columna<finCol;columna++){
-            neighbours = num_neighbours(Matrix, fila, columna, NROWS, NCOLS);
-            if (neighbours < 2 && Matrix[fila*NCOLS + columna] == 1) {
+            neighbours = num_neighbours(Matrix, columna, fila, NROWS, NCOLS);
+            if (neighbours < 3 && Matrix[fila*NCOLS + columna] == 1) {
                 temp[fila*NCOLS + columna] = 0;
-            } else if (neighbours > 3 && Matrix[fila*NCOLS + columna] == 1) {
+            } else if (neighbours > 4 && Matrix[fila*NCOLS + columna] == 1) {
                 temp[fila*NCOLS + columna] = 0; 
             } else if (neighbours == 3 && Matrix[fila*NCOLS + columna] == 0) {
                 temp[fila*NCOLS + columna] = 1; 

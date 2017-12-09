@@ -8,9 +8,9 @@
 
 //mpirun -np PROCESSORS ./gol -r NROWS -c NCOLS -i ITERATIONS -m PARTITIONING_METHOD -t NTHREADS -s SEED
 
-void setSeeds(int SEED, int **Matrix, int NROWS_METHOD, int NCOLS_METHOD, int iniCol, int finCol);
-void printValues (int **Matrix, int NROWS, int NCOLS);
-void initialize(int **Matrix, int NROWS, int NCOLS);
+void setSeeds(int SEED, int *Matrix, int NROWS_METHOD, int NCOLS_METHOD, int iniCol, int finCol, int NCOLS);
+void printValues (int *Matrix, int NROWS, int NCOLS);
+void initialize(int *Matrix, int NROWS, int NCOLS);
 
 int main(int argc, char *argv[]){
 
@@ -53,10 +53,11 @@ int main(int argc, char *argv[]){
 	
 	int rank;
 	MPI_Status status;
-	int **Matrix = (int **)malloc(NROWS*sizeof(int*));
-	for(int i=0;i<NROWS;i++){
-		Matrix[i] = (int*) malloc(NCOLS*sizeof(int));
-	}
+	//int **Matrix = (int **)malloc(NROWS*sizeof(int*));
+	//for(int i=0;i<NROWS;i++){
+	//	Matrix[i] = (int*) malloc(NCOLS*sizeof(int));
+	//}
+	int *Matrix = (int *)malloc(sizeof(int)*NROWS*NCOLS);
 
 	MPI_Datatype coltypeMiddle;
 	MPI_Datatype coltypeRight;
@@ -82,11 +83,11 @@ int main(int argc, char *argv[]){
 	
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	//MPI_Type_vector(NROWS,NCOLS_METHOD,NCOLS,MPI_INT,&coltype);
-	MPI_Type_vector(NROWS, NCOLS + 2, NROWS, MPI_INT, &coltypeMiddle);
+	MPI_Type_vector(NROWS, 4, NCOLS, MPI_INT, &coltypeMiddle);
 	MPI_Type_commit(&coltypeMiddle);
 	MPI_Type_vector(NROWS, NCOLS + 1, NROWS, MPI_INT, &coltypeRight);
 	MPI_Type_commit(&coltypeRight);
-	MPI_Type_vector(NROWS+3, NCOLS, NROWS, MPI_INT, &coltypeReturn);
+	MPI_Type_vector(NROWS, 3, NCOLS, MPI_INT, &coltypeReturn);
 	MPI_Type_commit(&coltypeReturn);
 	
 	
@@ -113,7 +114,17 @@ int main(int argc, char *argv[]){
 			
 			int finCol = NCOLS_METHOD +  finCol;
 			printf("ini: %d fin: %d\n", iniCol, finCol);
-			setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol);
+			setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol,NCOLS);
+			
+			//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR
+			/*int m=0;
+			for(int i=0;i<NROWS;i++){
+				for(int j=0;j<NCOLS;j++){
+					Matrix[i*NCOLS + j] = m;
+					m++;
+				}
+			}*/
+			//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR//BORRAR
 			
 			iniCol = iniCol + NCOLS_METHOD;
 			//iniCol = NCOLS_METHOD;
@@ -125,43 +136,37 @@ int main(int argc, char *argv[]){
 		
 		for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
 			
-			if (rankEnvio == nprocs - 1)
-			{
+			if (rankEnvio == nprocs - 1){
 				
-				MPI_Send(&Matrix[0][(rankEnvio * 2) - 1],1,coltypeRight,rankEnvio,rankEnvio,MPI_COMM_WORLD);
-			}/*
-			else {
+				MPI_Send(&Matrix[0],1,coltypeRight,rankEnvio,rankEnvio,MPI_COMM_WORLD);
+			} else {
 				
-				MPI_Send(Matrix[0][(rankEnvio * 2) - 1],1,coltypeMiddle,rankEnvio,rankEnvio,MPI_COMM_WORLD);
+				MPI_Send(&Matrix[0],1,coltypeMiddle,rankEnvio,rankEnvio,MPI_COMM_WORLD);
 			}
-			*/
+			
 		}
 		
-		
+		setLifeAndDead();
 		////////////////////////PROCESO
 		
 		//TODO: Barrera y unificar resultados 
 		
 		
-		for(int rankEnvio=3; rankEnvio < nprocs; rankEnvio++){
+		for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
 			
-			MPI_Recv(&Matrix[0][rankEnvio * 2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
+			if (rankEnvio == nprocs - 1){
+				MPI_Recv(&Matrix[6], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
+			}else{
+				MPI_Recv(&Matrix[2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
+			}
 		}
 		
 		printValues(Matrix, NROWS, NCOLS);
 	}else if (rank == nprocs - 1){
 		
-		for(int i=0;i<NROWS;++i){
-			for(int j=0;j<NCOLS;++j){ 
-				Matrix[i][j]=9;
-			}
-		}
-		
-		if (rank == nprocs - 1)
-		{
-			
-			MPI_Recv(&Matrix[0][rank * 2 - 1], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
-		}/*
+
+		MPI_Recv(&Matrix[0], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
+		/*
 		else {
 			MPI_Type_commit(&coltypeMiddle);
 			MPI_Recv(Matrix[0][rank * 2 - 1], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
@@ -170,12 +175,30 @@ int main(int argc, char *argv[]){
 		printf("rec rank %d", rank);
 		printValues(Matrix, NROWS, NCOLS);*/
 		for(int i=0;i<NROWS;i++){
-			Matrix[i][6] = 777;
+			Matrix[i*NCOLS+4] = 444;
+			Matrix[i*NCOLS+5] = 777;
+			Matrix[i*NCOLS+6] = 888;
+			Matrix[i*NCOLS+7] = 111;
 			
 		}
 		//printValues(Matrix, NROWS, NCOLS);
 		
-		MPI_Send(&Matrix[0][(rank * 2)], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
+		MPI_Send(&Matrix[6], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
+	}else if (rank != nprocs - 1){
+		
+		MPI_Recv(&Matrix[0], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
+		
+		for(int i=0;i<NROWS;i++){
+			Matrix[i*NCOLS+2] = 222;
+			Matrix[i*NCOLS+3] = 333;
+			Matrix[i*NCOLS+4] = 444;
+			Matrix[i*NCOLS+5] = 555;
+			
+		}
+		
+		MPI_Send(&Matrix[2], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
+		
+		
 	}
 	
 	MPI_Finalize();
@@ -186,17 +209,17 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void initialize(int **Matrix, int NROWS, int NCOLS){
+void initialize(int *Matrix, int NROWS, int NCOLS){
 	
 	for(int i=0;i<NROWS;i++){
 		for(int j=0;j<NCOLS;j++){
-			Matrix[i][j]=0;
+			Matrix[i*NCOLS + j]=0;
 		}
 	}
 	
 }
 	
-void setSeeds(int SEED, int **Matrix, int NROWS_METHOD, int NCOLS_METHOD, int iniCol, int finCol){
+void setSeeds(int SEED, int *Matrix, int NROWS_METHOD, int NCOLS_METHOD, int iniCol, int finCol, int NCOLS){
 	
 	int numUnos = 0;
 	int abort = 0;
@@ -210,10 +233,10 @@ void setSeeds(int SEED, int **Matrix, int NROWS_METHOD, int NCOLS_METHOD, int in
 				float value = (double)rand()/(double)RAND_MAX;
 
 				if (value > 0.5){  
-				  Matrix[i][j] = 1 ;
+				  Matrix[i*NCOLS + j] = 1 ;
 				  numUnos++;
 				}else{
-				  Matrix[i][j] = 0 ;
+				  Matrix[i*NCOLS + j] = 0 ;
 				}
 				if(numUnos == SEED){
 					abort = 1;
@@ -225,16 +248,17 @@ void setSeeds(int SEED, int **Matrix, int NROWS_METHOD, int NCOLS_METHOD, int in
 		}
 	}
 	//TODO: Validar que la cantidad semillas sea ingresada en la matriz
-		
+    
+	
 }
 
 
-void printValues (int **Matrix, int NROWS, int NCOLS){
+void printValues (int *Matrix, int NROWS, int NCOLS){
 	
 	for(int i=0;i<NROWS;i++){
 		for(int j=0;j<NCOLS;j++){
  
-			  printf("%d , ", Matrix[i][j]);
+			  printf("%d , ", Matrix[i*NCOLS+j]);
 
 			}
 		printf("\n");
@@ -242,13 +266,19 @@ void printValues (int **Matrix, int NROWS, int NCOLS){
 		
 }	
 
-
-void stripDecomposition(int **Matrix, int PROCESSORS,int NROWS, int NCOLS){
+void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol){
 	
-	for(int i=0;i<NROWS;i++){
+	for(int fila=0;fila<NROWS;fila++){
 		
-		for(int x=0;x<(NCOLS/PROCESSORS);x++){
-			
-		}
+			for(int columna=iniCol;columna<=finCol;columna++){
+				//Primera fila y primera columna
+				if(fila==0 && columna == 0){
+					
+					if(Matrix[fila*NCOLS + columna] == 0){
+						
+					}
+				}
+		
+			}	
 	}
 }

@@ -44,5 +44,5 @@ nvcc wave.cu -Xcompiler -fopenmp -o wave && ./wave -N 256 -X 10 -Y 10 -T 2 -f wa
 ### Compile and execution:
 
 ```
-mpicc gol.c -fopenmp -o gol && mpirun -np 1 ./gol -r 2 -c 3 -i 4 -m 5 -t 6 -s 7
+mpicc gol.c -fopenmp -o gol && mpirun -np 4 ./gol -r 8 -c 8 -i 2 -m 0 -t 2 -s 3
 ```

@@ -85,9 +85,9 @@ int main(int argc, char *argv[]){
 	
 	MPI_Type_vector(NROWS, 4, NCOLS, MPI_INT, &coltypeMiddle);
 	MPI_Type_commit(&coltypeMiddle);
-	MPI_Type_vector(NROWS, NCOLS + 1, NROWS, MPI_INT, &coltypeRight);
+	MPI_Type_vector(NROWS, 3, NROWS, MPI_INT, &coltypeRight);
 	MPI_Type_commit(&coltypeRight);
-	MPI_Type_vector(NROWS, 3, NCOLS, MPI_INT, &coltypeReturn);
+	MPI_Type_vector(NROWS, 2, NCOLS, MPI_INT, &coltypeReturn);
 	MPI_Type_commit(&coltypeReturn);
 	
 	
@@ -135,7 +135,9 @@ int main(int argc, char *argv[]){
 		}
 		
 		
-		setLifeAndDead(Matrix, NROWS, NCOLS, 0, NCOLS_METHOD);
+		
+		
+		
 		////////////////////////PROCESO
 		
 		//TODO: Barrera y unificar resultados 
@@ -149,6 +151,18 @@ int main(int argc, char *argv[]){
 			iniCol2 += NCOLS_METHOD;
 		}
 		
+		// Work in first strip associated to pid = 0.
+		//setLifeAndDead(Matrix, NROWS, NCOLS, 0, NCOLS_METHOD);
+		for(int i=0;i<NROWS;i++){
+			for(int j=0;j<2;j++){
+			Matrix[i*NCOLS+j] = 99;
+
+			}
+			
+		}
+		
+		
+		printf("Result:\n");
 		printValues(Matrix, NROWS, NCOLS);
 	}
 	else {
@@ -157,6 +171,8 @@ int main(int argc, char *argv[]){
 			MPI_Recv(&Matrix[0], 1, coltypeRight, 0, rank, MPI_COMM_WORLD, &status);
 		else
 			MPI_Recv(&Matrix[0], 1, coltypeMiddle, 0, rank, MPI_COMM_WORLD, &status);
+		
+		//initialize(Matrix, NROWS, NCOLS);
 		
 		//printf("rank: %d\n", rank);
 		for(int i=0;i<NROWS;i++){
@@ -171,6 +187,7 @@ int main(int argc, char *argv[]){
 			
 		}
 		//printValues(Matrix, NROWS, NCOLS);
+		//setLifeAndDead(Matrix, NROWS, NCOLS, rank * NCOLS_METHOD, rank * NCOLS_METHOD + 2);
 		
 				MPI_Send(&Matrix[rank * NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
 	}

@@ -274,6 +274,14 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
 
 	int *temp = (int *)malloc(sizeof(int)*NROWS*NCOLS);	
 	
+	for(int i=0;i<NROWS;i++){
+		for(int j=0;j<NCOLS;j++){
+ 
+			  temp[i*NCOLS+j] = Matrix[i*NCOLS+j];
+
+			}
+	}
+	
     int neighbours = 0;
 
     for(int fila=0;fila<NROWS;fila++){

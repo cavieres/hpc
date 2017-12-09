@@ -12,7 +12,7 @@ void setSeeds(int SEED, int *Matrix, int NROWS_METHOD, int NCOLS_METHOD, int ini
 void printValues (int *Matrix, int NROWS, int NCOLS);
 void initialize(int *Matrix, int NROWS, int NCOLS);
 void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol);
-int num_neighbours(int *Matrix, int x, int y, int NROWS, int NCOLS);
+int getNeighbors(int *Matrix, int x, int y, int NROWS, int NCOLS);
 
 int main(int argc, char *argv[]){
 
@@ -56,13 +56,14 @@ int main(int argc, char *argv[]){
 	
 	MPI_Status status;
 
-	int *Matrix = (int *)malloc(sizeof(int)*NROWS*NCOLS);
+	int *Matrix = (int *)malloc(sizeof(int)*NROWS*NCOLS); // Tablero con poblacion.
 
 	MPI_Datatype coltypeAll;
 	MPI_Datatype coltypeReturn;
 	
-	MPI_Init(NULL, NULL);
+	MPI_Init(NULL, NULL); // Inicializar trabajo en MPI.
 	
+	// Obtener cantidad de procesadores en ejecucion.
 	int nprocs;
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	
@@ -71,7 +72,8 @@ int main(int argc, char *argv[]){
 	
 	const int GHOST_COLS_MIDDLE = 2;
 	const int GHOST_COLS_RIGHT = 1;
-		
+	
+	// Tipo de particionado seleccionado.
 	if(PARTITIONING_METHOD == 0){
 		//strip decomposition
 		NCOLS_METHOD = NCOLS/nprocs;
@@ -83,7 +85,7 @@ int main(int argc, char *argv[]){
 		
 	}
 	
-	// Getting total of cores utilizing.
+	// Getting core in execution.
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
@@ -94,19 +96,16 @@ int main(int argc, char *argv[]){
 	MPI_Type_commit(&coltypeAll);
 	MPI_Type_commit(&coltypeReturn);
 	
-	
-	
-	
-	//Num HIlos
+	//Establecer cantidad hilos para paralelizar con OpenMP.
 	omp_set_num_threads(NTHREADS);
 	
-	
-	
+	// Inicializar tablero.
 	initialize(Matrix, NROWS, NCOLS);
 
 	
-	int iniCol = 0;
+	int iniCol = 0; // Indice inicial de particionado por cada CPU.
 
+	// Plantar semillas por cada CPU.
 	for(int i=0; i < nprocs; i++){
 
 		int finCol = NCOLS_METHOD +  finCol;
@@ -116,50 +115,41 @@ int main(int argc, char *argv[]){
 		iniCol = iniCol + NCOLS_METHOD;
 	}
 	
-	printf("Sended:\n");
+	printf("Tablero inicial:\n");
 	printValues(Matrix, NROWS, NCOLS);
 	
-	
-	//////////////////////////////////////
+	// Ejecución de algoritmo por iteraciones seleccionadas.
 	for(int it=0;it<ITERATIONS;it++){
 		
+		// Ejecución de maestro.
 		if(rank == 0){
 
-			for(int rankEnvio = 1; rankEnvio < nprocs; rankEnvio++){
+			// Envio particiones del tablero a esclavos.
+			for(int rankEnvio = 1; rankEnvio < nprocs; rankEnvio++)
+				MPI_Send(&Matrix[0],1,coltypeAll,rankEnvio,rankEnvio,MPI_COMM_WORLD);
 
-				if (rankEnvio == nprocs - 1){
-					MPI_Send(&Matrix[0],1,coltypeAll,rankEnvio,rankEnvio,MPI_COMM_WORLD);
-				} else {
-
-					MPI_Send(&Matrix[0],1,coltypeAll,rankEnvio,rankEnvio,MPI_COMM_WORLD);
-				}
-
-			}
-
+			// Establecer poblacion viva y muerta del particionado de maestro.
 			setLifeAndDead(Matrix, NROWS, NCOLS, 0, NCOLS_METHOD);
 
-			////////////////////////PROCESO
+			// Proceso
 
-			//TODO: Barrera y unificar resultados 
+			// Unificar resultados 
 
 			int iniCol2 = NCOLS_METHOD; // Discounting master's work.
 
+			// Recuperar particiones del tablero modificadas por esclavos.
 			for(int rankEnvio=1; rankEnvio < nprocs; rankEnvio++){
-
 				MPI_Recv(&Matrix[iniCol2], 1, coltypeReturn, rankEnvio, rankEnvio, MPI_COMM_WORLD, &status);
-				//printf("iniCol2: %d\n", iniCol2);
+				
 				iniCol2 += NCOLS_METHOD;
-				//printf("rank = %d; Result:\n", rankEnvio);
-				//printValues(Matrix, NROWS, NCOLS);
 			}
 
+		// Ejecucion de esclavos.
 		} else {
-
-			if (rank == nprocs - 1)
-				MPI_Recv(&Matrix[0], 1, coltypeAll, 0, rank, MPI_COMM_WORLD, &status);
-			else
-				MPI_Recv(&Matrix[0], 1, coltypeAll, 0, rank, MPI_COMM_WORLD, &status);
-
+			
+			// Recuperar particion del tablero enviada de maestro.
+			MPI_Recv(&Matrix[0], 1, coltypeAll, 0, rank, MPI_COMM_WORLD, &status);
+			
 			//initialize(Matrix, NROWS, NCOLS);
 
 			//printf("rank: %d\n", rank);
@@ -178,27 +168,31 @@ int main(int argc, char *argv[]){
 
 			int fin = inicio + NCOLS_METHOD;
 			
-
+			// Establecer poblacion viva y muerta del particionado enviado por maestro.
 			setLifeAndDead(Matrix, NROWS, NCOLS, inicio, fin);
 			
 			printf("rank = %d;Rango a Considerar = (%d, %d); \n", rank, inicio, fin);
 			//printValues(Matrix, NROWS, NCOLS);
 			
+			// Enviar particionado modificado de vuelta a maestro.
 			MPI_Send(&Matrix[rank*NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
 		}
 	}
 	
+	// Impresion de tablero con resultado final.
 	printf("Result:\n");
 	printValues(Matrix, NROWS, NCOLS);
 	
-	MPI_Finalize();
+	MPI_Finalize(); // Finalizar proceso MPI.
 	
+	// Computo tiempo final.
 	double time = omp_get_wtime() - start_time;
 	printf("\nClock: %lf\n", time);
 	
 	return 0;
 }
 
+// Inicializa tablero en ceros.
 void initialize(int *Matrix, int NROWS, int NCOLS){
 	
 	for(int i=0;i<NROWS;i++){
@@ -208,12 +202,13 @@ void initialize(int *Matrix, int NROWS, int NCOLS){
 	}
 	
 }
-	
+
+// Planta semillas en tablero.
 void setSeeds(int SEED, int *Matrix, int NROWS_METHOD, int NCOLS_METHOD, int iniCol, int finCol, int NCOLS){
 	
 	int numUnos = 0;
 	int abort = 0;
-	//TODO: mas unos de los requeridos (seed)
+	
 	#pragma omp parallel shared(numUnos) 
 	#pragma omp for schedule(static, 1) 
 	for(int i=0;i<NROWS_METHOD;i++){
@@ -239,12 +234,10 @@ void setSeeds(int SEED, int *Matrix, int NROWS_METHOD, int NCOLS_METHOD, int ini
 			}
 		}
 	}
-	//TODO: Validar que la cantidad semillas sea ingresada en la matriz
-    
 	
 }
 
-
+// Visualiza tablero.
 void printValues (int *Matrix, int NROWS, int NCOLS){
 	
 	for(int i=0;i<NROWS;i++){
@@ -258,6 +251,7 @@ void printValues (int *Matrix, int NROWS, int NCOLS){
 		
 }	
 
+// Establecer poblacion viva y muerta del tablero.
 void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
 
 	int *temp = (int *)malloc(sizeof(int)*NROWS*NCOLS);	
@@ -272,9 +266,11 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
 	
     int neighbours = 0;
 
+	// Obtiene cantidad de vecinos 
+	// y marca sujetos como vivos o muertos.
     for(int fila=0;fila<NROWS;fila++){
 		for(int columna=iniCol;columna<finCol;columna++){
-            neighbours = num_neighbours(Matrix, columna, fila, NROWS, NCOLS);
+            neighbours = getNeighbors(Matrix, columna, fila, NROWS, NCOLS);
             if (neighbours < 3 && Matrix[fila*NCOLS + columna] == 1) {
                 temp[fila*NCOLS + columna] = 0;
             } else if (neighbours > 4 && Matrix[fila*NCOLS + columna] == 1) {
@@ -305,8 +301,8 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
     }
 }
 
-
-int num_neighbours(int *Matrix, int x, int y, int NROWS, int NCOLS) {
+// Entrega cantidad de vecinos vivos de un vecindario.
+int getNeighbors(int *Matrix, int x, int y, int NROWS, int NCOLS) {
 
     int num_adj = 0;
     int tmpy = y;

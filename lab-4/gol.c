@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
 	
 	
 	//////////////////////////////////////
-	//for(int it=0;it<ITERATIONS;it++){
+	for(int it=0;it<ITERATIONS;it++){
 		
 		if(rank == 0){
 
@@ -183,14 +183,6 @@ int main(int argc, char *argv[]){
 
 			int fin = inicio + NCOLS_METHOD;
 			
-			if((rank + 1) == nprocs){
-				//Es el ultimo procesador
-				inicio--;
-			}else{
-				inicio--;
-				fin++;
-			}
-
 
 			setLifeAndDead(Matrix, NROWS, NCOLS, inicio, fin);
 			
@@ -198,7 +190,7 @@ int main(int argc, char *argv[]){
 			//printValues(Matrix, NROWS, NCOLS);
 			
 			MPI_Send(&Matrix[rank*NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
-		//}
+		}
 	}
 	
 
@@ -285,7 +277,7 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
     int neighbours = 0;
 
     for(int fila=0;fila<NROWS;fila++){
-		for(int columna=iniCol;columna<=finCol;columna++){
+		for(int columna=iniCol;columna<finCol;columna++){
             neighbours = num_neighbours(Matrix, fila, columna, NROWS, NCOLS);
             if (neighbours < 2 && Matrix[fila*NCOLS + columna] == 1) {
                 temp[fila*NCOLS + columna] = 0;
@@ -297,8 +289,21 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
         }
     }
 	
+	if(iniCol == 0){
+		//Rank 0
+		finCol--;
+		
+	}else if(finCol == NCOLS){
+		//ULtimo Rank
+		iniCol--;
+	}else{
+		//Ranks de en medio
+		finCol--;
+		iniCol--;
+	}
+	
     for(int fila=0;fila<NROWS;fila++){
-		for(int columna=iniCol;columna<=finCol;columna++){
+		for(int columna=iniCol;columna<finCol;columna++){
             Matrix[fila*NCOLS + columna] = temp[fila*NCOLS + columna];
         }
     }

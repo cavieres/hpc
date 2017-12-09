@@ -227,22 +227,24 @@ void setSeeds(int SEED, int *Matrix, int NROWS_METHOD, int NCOLS_METHOD, int ini
 	int numUnos = 0;
 	int abort = 0;
 	//TODO: mas unos de los requeridos (seed)
-	//#pragma omp parallel shared(numUnos) 
-	//#pragma omp for schedule(static, 1) 
+	#pragma omp parallel shared(numUnos) 
+	#pragma omp for schedule(static, 1) 
 	for(int i=0;i<NROWS_METHOD;i++){
 		if (abort == 0) {
 			for(int j=iniCol;j<finCol;j++){
+				if (abort == 0) {
 
-				float value = (double)rand()/(double)RAND_MAX;
+					float value = (double)rand()/(double)RAND_MAX;
 
-				if (value > 0.5){  
-				  Matrix[i*NCOLS + j] = 1 ;
-				  numUnos++;
-				}else{
-				  Matrix[i*NCOLS + j] = 0 ;
-				}
-				if(numUnos == SEED){
-					abort = 1;
+					if (value > 0.5){  
+					  Matrix[i*NCOLS + j] = 1 ;
+					  numUnos++;
+					}else{
+					  Matrix[i*NCOLS + j] = 0 ;
+					}
+					if(numUnos == SEED){
+						abort = 1;
+					}
 				}
 			}
 			if(numUnos == SEED){

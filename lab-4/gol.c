@@ -105,6 +105,16 @@ int main(int argc, char *argv[]){
 	initialize(Matrix, NROWS, NCOLS);
 
 	
+	int iniCol = 0;
+
+	for(int i=0; i < nprocs; i++){
+
+		int finCol = NCOLS_METHOD +  finCol;
+		printf("ini: %d fin: %d\n", iniCol, finCol);
+		setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol,NCOLS);
+
+		iniCol = iniCol + NCOLS_METHOD;
+	}
 	
 	
 	//////////////////////////////////////
@@ -112,16 +122,7 @@ int main(int argc, char *argv[]){
 		
 		if(rank == 0){
 
-			int iniCol = 0;
 
-			for(int i=0; i < nprocs; i++){
-
-				int finCol = NCOLS_METHOD +  finCol;
-				printf("ini: %d fin: %d\n", iniCol, finCol);
-				setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol,NCOLS);
-
-				iniCol = iniCol + NCOLS_METHOD;
-			}
 			//TODO: ENviar partes de matriz
 			printf("Sended:\n");
 			printValues(Matrix, NROWS, NCOLS);

@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	
-	int rank;
+	
 	MPI_Status status;
 
 	int *Matrix = (int *)malloc(sizeof(int)*NROWS*NCOLS);
@@ -69,6 +69,9 @@ int main(int argc, char *argv[]){
 	
 	int NROWS_METHOD = NROWS;
 	int NCOLS_METHOD = NCOLS;
+	
+	const int GHOST_COLS_MIDDLE = 2;
+	const int GHOST_COLS_RIGHT = 1;
 		
 	if(PARTITIONING_METHOD == 0){
 		//strip decomposition
@@ -81,13 +84,17 @@ int main(int argc, char *argv[]){
 		
 	}
 	
+	// Getting total of cores utilizing.
+	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
-	MPI_Type_vector(NROWS, 4, NCOLS, MPI_INT, &coltypeMiddle);
+	// Setting size of each strip column to send to each core.
+	MPI_Type_vector(NROWS, NCOLS_METHOD + GHOST_COLS_MIDDLE, NCOLS, MPI_INT, &coltypeMiddle);
+	MPI_Type_vector(NROWS, NCOLS_METHOD + GHOST_COLS_RIGHT, NROWS, MPI_INT, &coltypeRight);
+	MPI_Type_vector(NROWS, NCOLS_METHOD, NCOLS, MPI_INT, &coltypeReturn);
+	
 	MPI_Type_commit(&coltypeMiddle);
-	MPI_Type_vector(NROWS, 3, NROWS, MPI_INT, &coltypeRight);
 	MPI_Type_commit(&coltypeRight);
-	MPI_Type_vector(NROWS, 2, NCOLS, MPI_INT, &coltypeReturn);
 	MPI_Type_commit(&coltypeReturn);
 	
 	
@@ -153,13 +160,13 @@ int main(int argc, char *argv[]){
 		
 		// Work in first strip associated to pid = 0.
 		//setLifeAndDead(Matrix, NROWS, NCOLS, 0, NCOLS_METHOD);
-		for(int i=0;i<NROWS;i++){
+		/*for(int i=0;i<NROWS;i++){
 			for(int j=0;j<2;j++){
 			Matrix[i*NCOLS+j] = 99;
 
 			}
 			
-		}
+		}*/
 		
 		
 		printf("Result:\n");
@@ -175,7 +182,7 @@ int main(int argc, char *argv[]){
 		//initialize(Matrix, NROWS, NCOLS);
 		
 		//printf("rank: %d\n", rank);
-		for(int i=0;i<NROWS;i++){
+		/*for(int i=0;i<NROWS;i++){
 			Matrix[i*NCOLS+0] = rank;
 			Matrix[i*NCOLS+1] = rank;
 			Matrix[i*NCOLS+2] = rank;
@@ -185,7 +192,7 @@ int main(int argc, char *argv[]){
 			Matrix[i*NCOLS+6] = rank;
 			Matrix[i*NCOLS+7] = rank;
 			
-		}
+		}*/
 		//printValues(Matrix, NROWS, NCOLS);
 		//setLifeAndDead(Matrix, NROWS, NCOLS, rank * NCOLS_METHOD, rank * NCOLS_METHOD + 2);
 		

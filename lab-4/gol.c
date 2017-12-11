@@ -109,14 +109,16 @@ int main(int argc, char *argv[]){
 	for(int i=0; i < nprocs; i++){
 
 		int finCol = NCOLS_METHOD +  finCol;
-		printf("ini: %d fin: %d\n", iniCol, finCol);
+		//printf("ini: %d fin: %d\n", iniCol, finCol);
 		setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol,NCOLS);
 
 		iniCol = iniCol + NCOLS_METHOD;
 	}
-	
-	printf("Tablero inicial:\n");
-	printValues(Matrix, NROWS, NCOLS);
+
+	if(rank == 0){
+		printf("Tablero inicial:\n");
+		printValues(Matrix, NROWS, NCOLS);
+	}
 	
 	// Ejecución de algoritmo por iteraciones seleccionadas.
 	for(int it=0;it<ITERATIONS;it++){
@@ -150,20 +152,6 @@ int main(int argc, char *argv[]){
 			// Recuperar particion del tablero enviada de maestro.
 			MPI_Recv(&Matrix[0], 1, coltypeAll, 0, rank, MPI_COMM_WORLD, &status);
 			
-			//initialize(Matrix, NROWS, NCOLS);
-
-			//printf("rank: %d\n", rank);
-			/*for(int i=0;i<NROWS;i++){
-				Matrix[i*NCOLS+0] = rank;
-				Matrix[i*NCOLS+1] = rank;
-				Matrix[i*NCOLS+2] = rank;
-				Matrix[i*NCOLS+3] = rank;
-				Matrix[i*NCOLS+4] = rank;
-				Matrix[i*NCOLS+5] = rank;
-				Matrix[i*NCOLS+6] = rank;
-				Matrix[i*NCOLS+7] = rank;
-
-			}*/
 			int inicio = NCOLS_METHOD * rank;
 
 			int fin = inicio + NCOLS_METHOD;
@@ -171,23 +159,22 @@ int main(int argc, char *argv[]){
 			// Establecer poblacion viva y muerta del particionado enviado por maestro.
 			setLifeAndDead(Matrix, NROWS, NCOLS, inicio, fin);
 			
-			printf("rank = %d;Rango a Considerar = (%d, %d); \n", rank, inicio, fin);
-			//printValues(Matrix, NROWS, NCOLS);
-			
 			// Enviar particionado modificado de vuelta a maestro.
 			MPI_Send(&Matrix[rank*NCOLS_METHOD], 1, coltypeReturn, 0, rank, MPI_COMM_WORLD);
 		}
 	}
 	
-	// Impresion de tablero con resultado final.
-	printf("Result:\n");
-	printValues(Matrix, NROWS, NCOLS);
-	
 	MPI_Finalize(); // Finalizar proceso MPI.
 	
-	// Computo tiempo final.
-	double time = omp_get_wtime() - start_time;
-	printf("\nClock: %lf\n", time);
+	if(rank == 0){
+		// Impresion de tablero con resultado final.
+		printf("Result:\n");
+		printValues(Matrix, NROWS, NCOLS);
+		
+		// Computo tiempo final.
+		double time = omp_get_wtime() - start_time;
+		printf("\nClock: %lf\n", time);
+	}
 	
 	return 0;
 }
@@ -268,16 +255,20 @@ void setLifeAndDead(int *Matrix, int NROWS, int NCOLS, int iniCol, int finCol) {
 
 	// Obtiene cantidad de vecinos 
 	// y marca sujetos como vivos o muertos.
+	#pragma omp parallel shared(temp) 
+	#pragma omp for schedule(static, 1)
     for(int fila=0;fila<NROWS;fila++){
 		for(int columna=iniCol;columna<finCol;columna++){
             neighbours = getNeighbors(Matrix, columna, fila, NROWS, NCOLS);
-            if (neighbours < 3 && Matrix[fila*NCOLS + columna] == 1) {
-                temp[fila*NCOLS + columna] = 0;
-            } else if (neighbours > 4 && Matrix[fila*NCOLS + columna] == 1) {
-                temp[fila*NCOLS + columna] = 0; 
-            } else if (neighbours == 3 && Matrix[fila*NCOLS + columna] == 0) {
-                temp[fila*NCOLS + columna] = 1; 
-            }
+            if (neighbours == 3 && Matrix[fila*NCOLS + columna] == 0) {
+                temp[fila*NCOLS + columna] = 1;  
+            }else if(neighbours < 3 && Matrix[fila*NCOLS + columna] == 1){
+				temp[fila*NCOLS + columna] = 0;  
+			}else if(neighbours == 3 && neighbours == 4 && Matrix[fila*NCOLS + columna] == 1){
+				temp[fila*NCOLS + columna] = 1; 
+			}else if(neighbours > 4 && Matrix[fila*NCOLS + columna] == 1){
+				temp[fila*NCOLS + columna] = 0;
+			}
         }
     }
 	

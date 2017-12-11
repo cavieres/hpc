@@ -104,11 +104,11 @@ int main(int argc, char *argv[]){
 
 	
 	int iniCol = 0; // Indice inicial de particionado por cada CPU.
-
+	int finCol = 0;
 	// Plantar semillas por cada CPU.
 	for(int i=0; i < nprocs; i++){
 
-		int finCol = NCOLS_METHOD +  finCol;
+		finCol = NCOLS_METHOD +  finCol;
 		//printf("ini: %d fin: %d\n", iniCol, finCol);
 		setSeeds(SEED, Matrix, NROWS_METHOD, NCOLS_METHOD, iniCol, finCol,NCOLS);
 
